@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - FoodShare</title>
+    <link rel="stylesheet" href="dashboard.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+        /* Helper classes to toggle views */
+        .donor-view { display: flex; }
+        .recipient-view { display: none; }
+        
+        /* Styling for the new banner image */
+        .recipient-banner {
+            width: 100%;
+            height: 180px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            background-color: #e0f2f1;
+            position: relative;
+        }
+        .recipient-banner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .banner-text {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-weight: 700;
+            font-size: 24px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        /* Style for the Request button */
+        .request-btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 8px;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .request-btn:hover { background-color: #059669; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <div class="header-left">
+          <img src="profile.jpg" alt="Profile" class="profile-img" id="dashboard-profile-img" />
+          <div class="welcome-text">
+            <h1>Welcome back!</h1>
+            <p id="dashboard-user-name">User</p>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="icon-btn notification-btn">
+            <span class="icon">🔔</span>
+            <span class="badge">1</span>
+          </div>
+          <a href="settings.html" class="icon-btn settings-btn" style="text-decoration: none; color: inherit;">
+            <span class="icon">⚙️</span>
+          </a>
+        </div>
+      </header>
+
+      <a href="new-donation.html" class="create-donation-btn donor-view" id="donor-main-btn" style="text-decoration: none; align-items: center; justify-content: center; gap: 8px;">
+        <span class="plus-icon">+</span>
+        <span>Create New Donation</span>
+      </a>
+
+      <a href="nearby-donations.html" class="create-donation-btn recipient-view" id="recipient-main-btn" style="text-decoration: none; align-items: center; justify-content: center; gap: 8px; background-color: #3b82f6;">
+        <span class="icon">📍</span>
+        <span>Nearby Donations</span>
+      </a>
+
+
+      <div class="stats-section donor-view" id="donor-stats">
+        <div class="stat-card">
+          <div class="stat-icon green">📦</div>
+          <div class="stat-number green" id="stat-total-donations">0</div>
+          <div class="stat-label">Total Donations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">👥</div>
+          <div class="stat-number blue">0</div>
+          <div class="stat-label">People Helped</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">📈</div>
+          <div class="stat-number purple">0kg</div>
+          <div class="stat-label">Food Saved</div>
+        </div>
+      </div>
+
+      <div class="recipient-banner recipient-view" id="recipient-banner">
+          <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=2070&auto=format&fit=crop" alt="Community Support">
+          <div class="banner-text">Feeding the Community</div>
+      </div>
+
+
+      <div class="recent-donations">
+        <div class="section-header">
+          <h2 id="main-list-header">Recent Donations</h2>
+          <a href="#" class="view-all">View All</a>
+        </div>
+
+        <div class="donation-list" id="main-donations-list">
+           </div>
+      </div>
+
+      <div class="cards-section">
+        <a href="my-donations.html" class="card my-donations" style="text-decoration: none; color: inherit;">
+          <div class="card-icon green">📦</div>
+          <h3 id="my-activity-label">My Donations</h3>
+          <p id="my-donations-count">View history</p>
+        </a>
+
+        <a href="profile.html" class="card profile-card" style="text-decoration: none; color: inherit;">
+          <div class="card-icon blue">👤</div>
+          <h3>Profile</h3>
+          <p>View & edit</p>
+        </a>
+      </div>
+
+      <div class="impact-card donor-view" id="donor-impact-card">
+        <h2>Your Impact This Month</h2>
+        <div class="motivational-message">
+          <span class="star-icon">⭐</span>
+          <p>Keep up the great work! You're making a real difference.</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentUserRole = 'donor'; // Default
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        // 1. Load User Info & Determine Role
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          currentUserRole = user.role; // 'donor' or 'recipient'
+
+          if (user.profile_image) document.getElementById('dashboard-profile-img').src = user.profile_image;
+          if (user.full_name) document.getElementById('dashboard-user-name').textContent = user.full_name;
+          
+          adjustUIForRole(currentUserRole);
+        } else {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        // 2. Fetch and Render Data
+        await loadDashboardData();
+      });
+
+      function adjustUIForRole(role) {
+          const donorElements = document.querySelectorAll('.donor-view');
+          const recipientElements = document.querySelectorAll('.recipient-view');
+          const listHeader = document.getElementById('main-list-header');
+          const activityLabel = document.getElementById('my-activity-label');
+
+          if (role === 'recipient') {
+              // Recipient View
+              donorElements.forEach(el => el.style.display = 'none');
+              recipientElements.forEach(el => el.style.display = 'flex');
+              listHeader.textContent = "Recent Requests"; // Or 'Nearby Donations' depending on preference
+              activityLabel.textContent = "My Requests";
+          } else {
+              // Donor View
+              donorElements.forEach(el => el.style.display = 'flex');
+              recipientElements.forEach(el => el.style.display = 'none');
+              listHeader.textContent = "Recent Donations";
+              activityLabel.textContent = "My Donations";
+          }
+      }
+
+      async function loadDashboardData() {
+          const donationListContainer = document.getElementById('main-donations-list');
+          donationListContainer.innerHTML = '<p style="text-align:center;">Loading...</p>';
+
+          try {
+              // Fetch ALL donations from server
+              const response = await fetch('/api/donations');
+              const data = await response.json();
+
+              if (!data.success || data.donations.length === 0) {
+                  renderEmptyState(donationListContainer);
+                  return;
+              }
+
+              const allDonations = data.donations;
+              const user = JSON.parse(localStorage.getItem('user'));
+              
+              // --- 1. UPDATE STATS (Always Filtered to MY impact) ---
+              const myDonations = allDonations.filter(d => d.user_id === user.id);
+              document.getElementById('stat-total-donations').textContent = myDonations.length;
+
+              // --- 2. UPDATE LIST (Different logic per role) ---
+              let displayList = [];
+
+              if (currentUserRole === 'recipient') {
+                  // Recipient: Sees Available items to Request
+                  displayList = allDonations.filter(d => d.status === 'available');
+              } else {
+                  // Donor: Sees ALL donations (Global Feed) - FIXED HERE
+                  displayList = allDonations;
+              }
+
+              // Render
+              if (displayList.length > 0) {
+                  donationListContainer.innerHTML = '';
+                  displayList.forEach(donation => renderDonationItem(donation, donationListContainer));
+              } else {
+                  renderEmptyState(donationListContainer);
+              }
+              
+          } catch (error) {
+              console.error('Error:', error);
+              donationListContainer.innerHTML = '<p style="color:red;text-align:center;">Failed to load data.</p>';
+          }
+      }
+
+      function renderDonationItem(donation, container) {
+          const img = donation.image_data || 'vegetables.jpg';
+          
+          let actionButton = '';
+          if (currentUserRole === 'recipient') {
+              actionButton = `<button class="request-btn" onclick="requestDonation(${donation.id})">Request This Food</button>`;
+          }
+
+          const html = `
+            <div class="donation-item" style="flex-wrap: wrap;">
+              <img src="${img}" alt="${donation.title}" class="donation-img" style="object-fit:cover;" />
+              <div class="donation-info">
+                <h3>${donation.title}</h3>
+                <p class="donation-weight">${donation.quantity}</p>
+                <p class="donation-location">📍 ${donation.pickup_location}</p>
+                <p style="font-size:12px; color:#888;">By: ${donation.donor_name || 'Unknown'}</p>
+              </div>
+              <span class="status-badge ${donation.status}">${donation.status}</span>
+              ${actionButton}
+            </div>
+          `;
+          container.insertAdjacentHTML('beforeend', html);
+      }
+
+      function renderEmptyState(container) {
+          const msg = currentUserRole === 'recipient' 
+              ? "No donations are currently available nearby." 
+              : "No donations found in the community yet.";
+              
+          container.innerHTML = `
+            <div style="text-align: center; padding: 30px; color: #6b7280; background: #fff; border-radius: 12px;">
+                <p style="margin-bottom: 8px; font-size: 24px;">📭</p>
+                <p>${msg}</p>
+            </div>
+          `;
+      }
+
+      async function requestDonation(donationId) {
+          const confirmReq = confirm("Are you sure you want to request this donation? The donor will be notified.");
+          if (!confirmReq) return;
+
+          try {
+              const response = await fetch(`/api/donations/${donationId}/request`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' }
+              });
+              const result = await response.json();
+
+              if (result.success) {
+                  alert("Donation requested successfully!");
+                  loadDashboardData();
+              } else {
+                  alert(result.message || "Failed to request donation.");
+              }
+          } catch (error) {
+               alert("Network error occurred.");
+          }
+      }
+    </script>
+  </body>
+</html>

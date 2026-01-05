@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - FoodShare</title>
+    <link rel="stylesheet" href="profile.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <a href="dashboard.html" class="back-btn">←</a>
+        <h1>Profile</h1>
+        <div style="width: 40px;"></div>
+      </header>
+
+      <div class="profile-card">
+        <div class="profile-header">
+          <div class="profile-picture-container">
+            <img src="profile.jpg" alt="Profile" class="profile-picture" id="display-image" />
+            <div class="camera-icon">📷</div>
+          </div>
+          <div class="profile-info">
+            <h2 id="display-name">Loading...</h2>
+            <p class="email" id="display-email">...</p>
+            
+            <div class="badge-row">
+              <span class="role-badge" id="display-role">User</span>
+              <div class="rating">
+                <span class="star">⭐</span>
+                <span class="rating-value">4.9</span>
+              </div>
+            </div>
+            <p style="font-size: 13px; color: #6b7280; margin-top: 4px;" id="display-location"></p>
+          </div>
+        </div>
+        
+        <button class="edit-profile-btn" onclick="window.location.href='edit-profile.html'">
+          <span class="edit-icon">✏️</span>
+          <span>Edit Profile</span>
+        </button>
+      </div>
+
+      <div class="impact-card">
+        <div class="card-header">
+          <span class="ribbon-icon">🏆</span>
+          <h3>Your Impact</h3>
+        </div>
+        <div class="impact-stats">
+          <div class="impact-stat-item">
+            <div class="stat-icon green">📦</div>
+            <div class="stat-value green">15</div>
+            <div class="stat-label">Total Donations</div>
+          </div>
+          <div class="impact-stat-item">
+            <div class="stat-icon blue">👥</div>
+            <div class="stat-value blue">47</div>
+            <div class="stat-label">People Helped</div>
+          </div>
+          <div class="impact-stat-item">
+            <div class="stat-icon yellow">⭐</div>
+            <div class="stat-value orange">4.9</div>
+            <div class="stat-label">Rating</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="achievements-card">
+        <div class="card-header">
+          <span class="ribbon-icon">🏆</span>
+          <h3>Achievements</h3>
+        </div>
+        <div class="achievements-list">
+          <div class="achievement-item">
+            <div class="achievement-icon yellow">⭐</div>
+            <div class="achievement-content">
+              <h4>First Donation</h4>
+              <p>Created your first food donation</p>
+            </div>
+          </div>
+          <div class="achievement-item">
+            <div class="achievement-icon yellow">🤝</div>
+            <div class="achievement-content">
+              <h4>Community Helper</h4>
+              <p>Helped 10+ people in need</p>
+            </div>
+          </div>
+          <div class="achievement-item">
+            <div class="achievement-icon green">♻️</div>
+            <div class="achievement-content">
+              <h4>Waste Warrior</h4>
+              <p>Saved 50kg+ from waste</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions-section">
+        <button class="action-btn logout-action" id="logoutBtn">
+          <span class="action-icon">🚪</span>
+          <span>Logout</span>
+        </button>
+      </div>
+
+      <p class="member-since">Member since January 2024</p>
+    </div>
+
+    <script>
+      // 1. LOAD PROFILE DATA
+      document.addEventListener('DOMContentLoaded', () => {
+        // Retrieve the user string from localStorage
+        const userStr = localStorage.getItem('user');
+
+        if (userStr) {
+          const user = JSON.parse(userStr);
+
+          // Update Text
+          document.getElementById('display-name').textContent = user.full_name || 'Guest User';
+          document.getElementById('display-email').textContent = user.email || '';
+          document.getElementById('display-role').textContent = (user.role || 'User').toUpperCase();
+          
+          if(user.location) {
+             document.getElementById('display-location').textContent = '📍 ' + user.location;
+          }
+
+          // Update Image (New Logic)
+          if (user.profile_image) {
+              document.getElementById('display-image').src = user.profile_image;
+          }
+          
+        } else {
+          window.location.href = 'login.html';
+        }
+      });
+
+      // 2. LOGOUT FUNCTIONALITY
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        try {
+          const response = await fetch('/api/logout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Clear localStorage
+            localStorage.removeItem('user');
+            localStorage.removeItem('session_token');
+            
+            // Redirect to login page
+            window.location.href = 'login.html';
+          } else {
+            alert('Logout failed. Please try again.');
+          }
+        } catch (error) {
+          console.error('Logout error:', error);
+          // Force logout on error
+          localStorage.removeItem('user');
+          localStorage.removeItem('session_token');
+          window.location.href = 'login.html';
+        }
+      });
+    </script>
+  </body>
+</html>

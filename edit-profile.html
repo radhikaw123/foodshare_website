@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Profile - FoodShare</title>
+    <link rel="stylesheet" href="edit-profile.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <a href="profile.html" class="back-btn">←</a>
+        <h1>Edit Profile</h1>
+        <div style="width: 40px;"></div>
+      </header>
+
+      <form id="editProfileForm" class="edit-form">
+        <div class="profile-upload-section">
+          <div class="image-wrapper">
+            <img src="profile.jpg" alt="Profile" id="profileImagePreview" />
+            <label for="profileUpload" class="camera-btn">
+              📷
+              <input type="file" id="profileUpload" accept="image/*" hidden />
+            </label>
+          </div>
+          <p class="change-photo-text">Tap to change photo</p>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Personal Details</h3>
+
+          <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="fullName" name="fullName" placeholder="Enter Your Name" required />
+          </div>
+
+          <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="email" name="email" placeholder="Enter Email Address" required />
+          </div>
+
+          <div class="input-group">
+            <label>Location</label>
+            <input type="text" id="location" name="location" placeholder="Enter Location" />
+          </div>
+          
+          <div class="input-group">
+            <label>Role (Read Only)</label>
+            <input type="text" id="role" name="role" disabled style="opacity: 0.6; background: #eee;" />
+          </div>
+        </div>
+
+        <button type="submit" class="save-btn">Save Changes</button>
+      </form>
+    </div>
+
+    <script>
+        // Load current user data
+        document.addEventListener('DOMContentLoaded', () => {
+          // We can try to get from local storage first for speed
+          const user = JSON.parse(localStorage.getItem('user'));
+          if (!user) {
+            window.location.href = 'login.html';
+            return;
+          }
+  
+          // Populate text fields
+          document.getElementById('fullName').value = user.full_name || '';
+          document.getElementById('email').value = user.email || '';
+          document.getElementById('location').value = user.location || '';
+          document.getElementById('role').value = user.role || '';
+          
+          // Show existing image
+          if (user.profile_image) {
+              document.getElementById('profileImagePreview').src = user.profile_image;
+          }
+        });
+  
+        // Handle Image Preview (Visual only)
+        document.getElementById('profileUpload').addEventListener('change', function(e) {
+          if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              document.getElementById('profileImagePreview').src = e.target.result;
+            }
+            reader.readAsDataURL(e.target.files[0]);
+          }
+        });
+  
+        // Handle Form Submit (Send to Server)
+        document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          
+          const btn = document.querySelector('.save-btn');
+          btn.textContent = 'Saving...';
+          btn.disabled = true;
+
+          // Prepare data
+          const full_name = document.getElementById('fullName').value;
+          const email = document.getElementById('email').value;
+          const location = document.getElementById('location').value;
+          const fileInput = document.getElementById('profileUpload');
+          
+          let profile_image = null;
+
+          // 1. Process Image if new one selected
+          if (fileInput.files && fileInput.files[0]) {
+             profile_image = await new Promise((resolve) => {
+                 const reader = new FileReader();
+                 reader.onload = (e) => resolve(e.target.result);
+                 reader.readAsDataURL(fileInput.files[0]);
+             });
+          }
+
+          try {
+              // 2. Send to API
+              const response = await fetch('/api/profile', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      full_name,
+                      email,
+                      location,
+                      profile_image // sends null if no new image, handled by server
+                  })
+              });
+
+              const result = await response.json();
+
+              if (result.success) {
+                  // 3. Update Local Storage with the Response from Server
+                  // This ensures local matches server immediately
+                  localStorage.setItem('user', JSON.stringify(result.user));
+                  
+                  btn.textContent = 'Saved!';
+                  setTimeout(() => { window.location.href = 'profile.html'; }, 800);
+              } else {
+                  alert('Error: ' + result.message);
+                  btn.textContent = 'Save Changes';
+                  btn.disabled = false;
+              }
+
+          } catch (error) {
+              console.error('Error:', error);
+              alert('Failed to connect to server');
+              btn.textContent = 'Save Changes';
+              btn.disabled = false;
+          }
+        });
+      </script>
+  </body>
+</html>

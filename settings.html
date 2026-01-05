@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings - FoodShare</title>
+    <link rel="stylesheet" href="settings.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <a href="dashboard.html" class="back-btn">←</a>
+        <h1>Settings</h1>
+        <div style="width: 40px;"></div>
+      </header>
+
+      <!-- Notifications Card -->
+      <div class="settings-card">
+        <div class="card-header">
+          <span class="header-icon">🔔</span>
+          <h2>Notifications</h2>
+        </div>
+        <div class="settings-list">
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>New Donations Near Me</h3>
+              <p>Get notified when food becomes available nearby</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Pickup Reminders</h3>
+              <p>Reminders for scheduled pickups</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Delivery Updates</h3>
+              <p>Status updates on your deliveries</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Community News</h3>
+              <p>Updates from the FoodShare community</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preferences Card -->
+      <div class="settings-card">
+        <div class="card-header">
+          <span class="header-icon">📱</span>
+          <h2>Preferences</h2>
+        </div>
+        <div class="settings-list">
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Push Notifications</h3>
+              <p>Receive notifications on your device</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Email Notifications</h3>
+              <p>Receive updates via email</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Location Sharing</h3>
+              <p>Share location for better recommendations</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dark Mode Card (Second Image) -->
+      <div class="settings-card">
+        <div class="setting-item">
+          <div class="setting-info">
+            <h3>Dark Mode</h3>
+            <p>Use dark theme (coming soon)</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" disabled />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- General Settings Card (Second Image) -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h2>General</h2>
+        </div>
+        <div class="settings-list">
+          <div class="setting-item clickable">
+            <div class="setting-info">
+              <span class="setting-icon">🛡️</span>
+              <div>
+                <h3>Privacy & Security</h3>
+                <p>Manage your privacy settings</p>
+              </div>
+            </div>
+            <span class="arrow">›</span>
+          </div>
+          <div class="setting-item clickable">
+            <div class="setting-info">
+              <span class="setting-icon">❓</span>
+              <div>
+                <h3>Help & Support</h3>
+                <p>Get help or contact support</p>
+              </div>
+            </div>
+            <span class="arrow">›</span>
+          </div>
+          <div class="setting-item clickable">
+            <div class="setting-info">
+              <span class="setting-icon">ℹ️</span>
+              <div>
+                <h3>About FoodShare</h3>
+                <p>Learn more about our mission</p>
+              </div>
+            </div>
+            <span class="arrow">›</span>
+          </div>
+          <div class="setting-item clickable">
+            <div class="setting-info">
+              <span class="setting-icon">🌐</span>
+              <div>
+                <h3>Language</h3>
+                <p>English (US)</p>
+              </div>
+            </div>
+            <span class="arrow">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

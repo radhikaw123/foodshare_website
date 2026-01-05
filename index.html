@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FoodShare - Splash</title>
+    <link rel="stylesheet" href="splash.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"                                                      
+    />
+  </head>
+  <body>
+    <div class="splash-container">
+      <div class="logo-container">
+        <div class="logo-circle">
+          <div class="leaf-icon">🍃</div>
+          <div class="heart-badge">❤️</div>
+        </div>
+      </div>
+      <h1 class="app-name">FoodShare</h1>
+      <p class="tagline">Reducing Waste, Sharing Hope</p>
+      <div class="loading-dots">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+      <p class="version">Version 1.0.0</p>
+    </div>
+    <script>
+      // Auto redirect to login after 3 seconds, or on click
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 3000);
+
+      document.querySelector('.splash-container')?.addEventListener('click', () => {
+        window.location.href = 'login.html';
+      });
+    </script>
+  </body>
+</html>

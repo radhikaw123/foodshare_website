@@ -1,0 +1,41 @@
+/* Minimal landing to match reference mock */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f8f6ef;
+  color: #1b1b1b;
+  display: flex;
+  min-height: 100vh;
+}
+
+.phone {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: #f8f6ef;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 420px;
+}
+
+.logo {
+  width: 240px;
+  height: auto;
+  object-fit: contain;
+}

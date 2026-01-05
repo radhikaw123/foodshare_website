@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In - Left Lover</title>
+    <link rel="stylesheet" href="login.css" />
+  </head>
+  <body>
+    <div class="page">
+      <div class="card">
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Sign in to continue sharing and reducing food waste</p>
+
+        <form class="form" action="#" method="post">
+          <label class="field">
+            <span>Email</span>
+            <div class="input">
+              <span class="icon"></span>
+              <input type="email" name="email" placeholder="Enter your email" required />
+            </div>
+          </label>
+
+          <label class="field">
+            <span>Password</span>
+            <div class="input">
+              <span class="icon"></span>
+              <input type="password" name="password" placeholder="Enter your password" required />
+              <button class="icon-btn" type="button" aria-label="toggle password visibility">👁️</button>
+            </div>
+          </label>
+
+          <a class="link forget" href="#">Forgot password?</a>
+
+          <button class="primary" type="submit" id="submitBtn">Sign In</button>
+          <div id="errorMessage" class="error-message" style="display: none; color: #ef4444; margin-top: 12px; text-align: center; font-size: 14px;"></div>
+        </form>
+
+        <p class="footer">
+          Don't have an account?
+          <a class="link" href="signup.html">Sign up here</a>
+        </p>
+      </div>
+    </div>
+    <script>
+      document.querySelector('.form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const form = e.target;
+        
+        // Get form values
+        const email = form.email.value.trim();
+        const password = form.password.value;
+        
+        // Reset error message
+        errorMessage.style.display = 'none';
+        errorMessage.textContent = '';
+        
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Signing In...';
+        
+        try {
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              email: email,
+              password: password
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Store user data in localStorage
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('session_token', data.session_token);
+            
+            // Redirect to dashboard
+            window.location.href = 'dashboard.html';
+          } else {
+            errorMessage.textContent = data.message || 'Login failed. Please try again.';
+            errorMessage.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Sign In';
+          }
+        } catch (error) {
+          errorMessage.textContent = 'Network error. Please check your connection and try again.';
+          errorMessage.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Sign In';
+        }
+      });
+    </script>
+  </body>
+</html>
+

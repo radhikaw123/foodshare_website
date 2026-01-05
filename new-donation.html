@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Donation - FoodShare</title>
+    <link rel="stylesheet" href="new-donation.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <a href="dashboard.html" class="back-btn">←</a>
+        <h1>New Donation</h1>
+        <div style="width: 40px;"></div>
+      </header>
+
+      <div class="form-card">
+        <div class="card-header">
+          <span class="header-icon">📦</span>
+          <h2>Food Details</h2>
+        </div>
+        <form class="donation-form" id="form-part-1">
+          <div class="form-group">
+            <label for="food-title">
+              Food Title <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="food-title"
+              name="food-title"
+              placeholder="e.g., Fresh vegetables and fruits"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              rows="4"
+              placeholder="Describe the food items, condition, and any special notes..."
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="food-type">
+                Food Type <span class="required">*</span>
+              </label>
+              <div class="select-wrapper">
+                <select id="food-type" name="food-type" required>
+                  <option value="">Select type</option>
+                  <option value="vegetables">Vegetables</option>
+                  <option value="fruits">Fruits</option>
+                  <option value="bread">Bread & Pastries</option>
+                  <option value="dairy">Dairy Products</option>
+                  <option value="prepared">Prepared Meals</option>
+                  <option value="other">Other</option>
+                </select>
+                <span class="select-arrow">▼</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="quantity">
+                Quantity <span class="required">*</span>
+              </label>
+              <input
+                type="text"
+                id="quantity"
+                name="quantity"
+                placeholder="e.g., 5 kg, 10 portions"
+                required
+              />
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="form-card">
+        <div class="card-header">
+          <span class="header-icon">📷</span>
+          <h2>Photos</h2>
+        </div>
+        <div class="photo-upload-area">
+          <input
+            type="file"
+            id="photo-upload"
+            name="photo-upload"
+            accept="image/*"
+            style="display: none;"
+          />
+          <label for="photo-upload" class="upload-label">
+            <div class="upload-icon">↑</div>
+            <div class="upload-text">Add Photo</div>
+          </label>
+        </div>
+        <div id="photo-preview" class="photo-preview"></div>
+      </div>
+
+      <div class="form-card">
+        <div class="card-header">
+          <span class="header-icon">📍</span>
+          <h2>Pickup Details</h2>
+        </div>
+        <form class="donation-form" id="form-part-2">
+          <div class="form-group">
+            <label for="pickup-location">
+              Pickup Location <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="pickup-location"
+              name="pickup-location"
+              placeholder="Enter full address or location"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="best-before-date">
+              Best Before Date <span class="required">*</span>
+            </label>
+            <div class="date-input-wrapper">
+              <input
+                type="text"
+                id="best-before-date"
+                name="best-before-date"
+                placeholder="dd-mm-yyyy"
+                required
+              />
+              <span class="calendar-icon">📅</span>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <button type="button" class="create-donation-btn" id="submitDonationBtn">
+        Create Donation
+      </button>
+
+      <div class="form-card guidelines-card">
+        <div class="card-header">
+          <span class="header-icon">📄</span>
+          <h2>Donation Guidelines</h2>
+        </div>
+        <ul class="guidelines-list">
+          <li>Ensure food is safe and within expiration date</li>
+          <li>Take clear photos of the food items</li>
+          <li>Be available for pickup during specified times</li>
+          <li>Package food items properly for transport</li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      // 1. IMAGE PREVIEW LOGIC
+      const photoUpload = document.getElementById('photo-upload');
+      const photoPreview = document.getElementById('photo-preview');
+
+      photoUpload.addEventListener('change', (e) => {
+        photoPreview.innerHTML = '';
+        const file = e.target.files[0];
+
+        if (file && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            img.className = 'preview-image';
+            photoPreview.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // 2. DATE FORMATTING
+      const dateInput = document.getElementById('best-before-date');
+      dateInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+          value = value.substring(0, 2) + '-' + value.substring(2);
+        }
+        if (value.length >= 5) {
+          value = value.substring(0, 5) + '-' + value.substring(5, 9);
+        }
+        e.target.value = value;
+      });
+
+      // 3. SUBMISSION LOGIC (Saves to LocalStorage)
+      document.getElementById('submitDonationBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    
+    const btn = e.target;
+    btn.textContent = "Processing...";
+    btn.disabled = true;
+
+    // Get values
+    const title = document.getElementById('food-title').value;
+    const description = document.getElementById('description').value;
+    const type = document.getElementById('food-type').value;
+    const quantity = document.getElementById('quantity').value;
+    const location = document.getElementById('pickup-location').value;
+    const date = document.getElementById('best-before-date').value;
+    
+    if (!title || !type || !quantity || !location || !date) {
+        alert("Please fill in all required fields marked with *");
+        btn.textContent = "Create Donation";
+        btn.disabled = false;
+        return;
+    }
+
+    // Handle Image
+    const photoUpload = document.getElementById('photo-upload');
+    let imageBase64 = ''; // Send empty string if no image, or default on server
+    
+    if (photoUpload.files && photoUpload.files[0]) {
+        imageBase64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(photoUpload.files[0]);
+        });
+    }
+
+    // Prepare Data
+    const donationData = {
+        title: title,
+        description: description,
+        food_type: type,
+        quantity: quantity,
+        pickup_location: location,
+        best_before_date: date,
+        image_data: imageBase64
+    };
+
+    try {
+        const response = await fetch('/api/donations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(donationData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Donation created successfully!');
+            window.location.href = 'dashboard.html';
+        } else {
+            alert('Error: ' + result.message);
+            btn.textContent = "Create Donation";
+            btn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to connect to server.');
+        btn.textContent = "Create Donation";
+        btn.disabled = false;
+    }
+  });
+    </script>
+  </body>
+</html>

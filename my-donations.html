@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Activity - FoodShare</title>
+    <link rel="stylesheet" href="my-donations.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <a href="dashboard.html" class="back-btn">←</a>
+        <h1 id="page-title">My Donations</h1>
+        <div style="width: 40px;"></div>
+      </header>
+
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="summary-number green" id="count-total">0</div>
+          <div class="summary-label">Total</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-number blue" id="count-active">0</div>
+          <div class="summary-label">Active</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-number grey" id="count-completed">0</div>
+          <div class="summary-label">Completed</div>
+        </div>
+      </div>
+
+      <a href="new-donation.html" class="create-donation-btn" id="create-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <span class="plus-icon">+</span>
+        <span>Create New Donation</span>
+      </a>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="active">
+          Active <span class="tab-count" id="tab-count-active">(0)</span>
+        </button>
+        <button class="tab" data-tab="completed">
+          Completed <span class="tab-count" id="tab-count-completed">(0)</span>
+        </button>
+      </div>
+
+      <div class="donations-list" id="active-list">
+        <p class="empty-message" style="text-align:center; padding:20px;">Loading...</p>
+      </div>
+
+      <div class="donations-list hidden" id="completed-list">
+        <p class="empty-message">No completed items yet</p>
+      </div>
+    </div>
+
+    <script>
+      let currentUserRole = 'donor';
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        // 1. Get Current User & Role
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+            window.location.href = 'login.html';
+            return;
+        }
+        const currentUser = JSON.parse(userStr);
+        currentUserRole = currentUser.role;
+
+        // 2. Adjust Page UI based on Role
+        if (currentUserRole === 'recipient') {
+            document.getElementById('page-title').textContent = "My Requests";
+            document.title = "My Requests - FoodShare";
+            document.getElementById('create-btn').style.display = 'none'; // Hide create button for recipients
+        }
+
+        // 3. Fetch All Donations
+        try {
+            const response = await fetch('/api/donations');
+            const data = await response.json();
+
+            if (data.success) {
+                let myItems = [];
+
+                // 4. FILTER LOGIC
+                if (currentUserRole === 'recipient') {
+                    // Recipient: Show items where I am the recipient_id
+                    // (These are items I clicked "Request" on)
+                    myItems = data.donations.filter(d => d.recipient_id === currentUser.id);
+                } else {
+                    // Donor: Show items I created
+                    myItems = data.donations.filter(d => d.user_id === currentUser.id);
+                }
+                
+                renderItems(myItems);
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+            document.getElementById('active-list').innerHTML = '<p class="empty-message">Error loading data.</p>';
+        }
+      });
+
+      function renderItems(items) {
+          const activeList = document.getElementById('active-list');
+          const completedList = document.getElementById('completed-list');
+          
+          activeList.innerHTML = '';
+          completedList.innerHTML = '';
+
+          let activeCount = 0;
+          let completedCount = 0;
+
+          if (items.length === 0) {
+              const msg = currentUserRole === 'recipient' 
+                  ? "You haven't requested any donations yet." 
+                  : "You haven't made any donations yet.";
+              activeList.innerHTML = `<p class="empty-message" style="text-align:center; color:#888;">${msg}</p>`;
+          }
+
+          items.forEach(item => {
+              // Logic for "Active" vs "Completed"
+              // Active = available, requested, or in-transit
+              // Completed = completed
+              const isActive = item.status !== 'completed';
+              
+              if (isActive) activeCount++;
+              else completedCount++;
+
+              const img = item.image_data || 'vegetables.jpg'; 
+              const dateObj = new Date(item.created_at);
+              const dateStr = dateObj.toLocaleDateString();
+
+              // For Recipients, show "Donor: Name"
+              // For Donors, show "Pickup: Location" or similar
+              let subDetail = '';
+              if (currentUserRole === 'recipient') {
+                  subDetail = `<p style="font-size:12px; color:#888;">Donor: ${item.donor_name || 'Community Member'}</p>`;
+              } else {
+                  // If I'm a donor and someone requested it, show that status clearly
+                  if (item.status === 'requested') {
+                      subDetail = `<p style="font-size:12px; color:#e11d48; font-weight:600;">Action Required: Donation Requested!</p>`;
+                  }
+              }
+
+              const html = `
+                <div class="donation-item">
+                  <img src="${img}" alt="${item.title}" class="donation-image" style="object-fit:cover;" />
+                  <div class="donation-content">
+                    <h3>${item.title}</h3>
+                    <div class="donation-details">
+                      <div class="detail-item">
+                        <span class="detail-icon">📦</span>
+                        <span>${item.quantity}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>${item.pickup_location}</span>
+                      </div>
+                    </div>
+                    ${subDetail}
+                    <p class="created-date">Posted ${dateStr}</p>
+                  </div>
+                  <div class="donation-actions">
+                    <span class="status-badge ${item.status}">${item.status}</span>
+                  </div>
+                </div>
+              `;
+
+              if (isActive) {
+                  activeList.insertAdjacentHTML('beforeend', html);
+              } else {
+                  completedList.insertAdjacentHTML('beforeend', html);
+              }
+          });
+
+          // Update Counters
+          document.getElementById('count-total').textContent = items.length;
+          document.getElementById('count-active').textContent = activeCount;
+          document.getElementById('count-completed').textContent = completedCount;
+          
+          document.getElementById('tab-count-active').textContent = `(${activeCount})`;
+          document.getElementById('tab-count-completed').textContent = `(${completedCount})`;
+      }
+
+      // Tab switching
+      const tabs = document.querySelectorAll('.tab');
+      const activeList = document.getElementById('active-list');
+      const completedList = document.getElementById('completed-list');
+
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          tabs.forEach((t) => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          if (tab.dataset.tab === 'active') {
+            activeList.classList.remove('hidden');
+            completedList.classList.add('hidden');
+          } else {
+            activeList.classList.add('hidden');
+            completedList.classList.remove('hidden');
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

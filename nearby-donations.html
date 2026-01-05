@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nearby Donations - FoodShare</title>
+    <link rel="stylesheet" href="nearby-donations.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <a href="dashboard.html" class="back-btn">←</a>
+        <h1>Nearby Donations</h1>
+        <div class="header-spacer"></div>
+      </header>
+
+      <div class="banner">
+        <h2>Available Food</h2>
+        <p>These items are currently available for pickup in your community.</p>
+      </div>
+
+      <div class="search-bar" style="background-color: white; border: 1px solid #d1d5db;">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          id="search-input"
+          placeholder="Search for food, location, or donor..." 
+          style="background:transparent; border:none; width:100%; outline:none; font-size:16px;"
+        >
+      </div>
+
+      <div class="donations-grid" id="donations-feed">
+         <p class="loading-text">Loading nearby donations...</p>
+      </div>
+    </div>
+
+    <script>
+      let allDonations = []; // Store data globally for searching
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        await loadNearbyDonations();
+
+        // ATTACH SEARCH LISTENER
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', (e) => {
+            filterDonations(e.target.value);
+        });
+      });
+
+      async function loadNearbyDonations() {
+          const container = document.getElementById('donations-feed');
+          
+          try {
+              const response = await fetch('/api/donations');
+              const data = await response.json();
+
+              if (data.success) {
+                  // Filter only Available items
+                  allDonations = data.donations.filter(d => d.status === 'available');
+                  renderList(allDonations, container);
+              }
+          } catch (error) {
+              console.error(error);
+              container.innerHTML = '<div class="empty-state">Failed to load donations.</div>';
+          }
+      }
+
+      function filterDonations(query) {
+          const container = document.getElementById('donations-feed');
+          const lowerQuery = query.toLowerCase();
+
+          // Filter the global list based on Title, Location, or Donor Name
+          const filtered = allDonations.filter(item => {
+              return (
+                  item.title.toLowerCase().includes(lowerQuery) ||
+                  item.pickup_location.toLowerCase().includes(lowerQuery) ||
+                  (item.donor_name && item.donor_name.toLowerCase().includes(lowerQuery)) ||
+                  (item.food_type && item.food_type.toLowerCase().includes(lowerQuery))
+              );
+          });
+
+          renderList(filtered, container);
+      }
+
+      function renderList(items, container) {
+          container.innerHTML = ''; 
+
+          if (items.length === 0) {
+              container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🔍</div>
+                    <h3>No results found</h3>
+                    <p>Try searching for a different food item or location.</p>
+                </div>
+              `;
+              return;
+          }
+
+          items.forEach(item => {
+              const img = item.image_data || 'vegetables.jpg';
+              const date = new Date(item.created_at).toLocaleDateString();
+
+              const html = `
+                <div class="donation-card">
+                  <div class="card-image-container">
+                    <img src="${img}" alt="${item.title}" class="card-img" />
+                    <span class="status-badge">Available</span>
+                  </div>
+                  
+                  <div class="card-content">
+                    <h3 class="card-title">${item.title}</h3>
+                    
+                    <div class="card-details">
+                        <div class="detail-row">
+                            <span>📦 ${item.quantity}</span>
+                            <span>•</span>
+                            <span>${item.food_type || 'Food'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>📍 ${item.pickup_location}</span>
+                        </div>
+                        <div class="detail-row meta">
+                            <span>By: ${item.donor_name || 'Donor'}</span>
+                            <span>${date}</span>
+                        </div>
+                    </div>
+
+                    <button class="request-btn" onclick="requestItem(${item.id})">
+                      Request This Food
+                    </button>
+                  </div>
+                </div>
+              `;
+              container.insertAdjacentHTML('beforeend', html);
+          });
+      }
+
+      async function requestItem(id) {
+          if(!confirm("Request this donation? The donor will be notified.")) return;
+
+          try {
+              const response = await fetch(`/api/donations/${id}/request`, {
+                  method: 'PUT',
+                  headers: {'Content-Type': 'application/json'}
+              });
+              const result = await response.json();
+              
+              if (result.success) {
+                  alert("Success! You can view this in 'My Requests'.");
+                  loadNearbyDonations(); // Reloads data
+                  document.getElementById('search-input').value = ''; // Clear search
+              } else {
+                  alert("Error: " + result.message);
+              }
+          } catch (e) {
+              alert("Network error");
+          }
+      }
+    </script>
+  </body>
+</html>

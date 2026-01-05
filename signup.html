@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up - FoodShare</title>
+    <link rel="stylesheet" href="signup.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <a class="back" href="index.html" aria-label="Back to landing">←</a>
+        <div class="logo-circle">🍃</div>
+      </header>
+
+      <div class="card">
+        <h1>Join FoodShare</h1>
+        <p class="subtitle">Create an account to start reducing food waste in your community</p>
+
+        <form class="form" action="#" method="post">
+          <label class="field">
+            <span>Full Name</span>
+            <div class="input">
+              <span class="icon">👤</span>
+              <input type="text" name="full_name" placeholder="Enter your full name" required />
+            </div>
+          </label>
+
+          <label class="field">
+            <span>Email</span>
+            <div class="input">
+              <span class="icon">📧</span>
+              <input type="email" name="email" placeholder="Enter your email" required />
+            </div>
+          </label>
+
+          <label class="field">
+            <span>I want to</span>
+            <div class="input select">
+              <select name="role" id="role" required>
+                <option value="" disabled selected>Select your role</option>
+                <option value="donor">Donate food</option>
+                <option value="recipient">Receive food</option>
+                <option value="volunteer">Volunteer</option>
+              </select>
+              <span class="caret">⌄</span>
+            </div>
+          </label>
+
+          <label class="field">
+            <span>Location</span>
+            <div class="input">
+              <span class="icon">📍</span>
+              <input type="text" name="location" placeholder="Enter your city or address" required />
+            </div>
+          </label>
+
+          <label class="field">
+            <span>Password</span>
+            <div class="input">
+              <span class="icon">🔒</span>
+              <input type="password" name="password" placeholder="Create a password" required />
+            </div>
+          </label>
+
+          <label class="field">
+            <span>Confirm Password</span>
+            <div class="input">
+              <span class="icon">🔒</span>
+              <input type="password" name="confirmPassword" placeholder="Confirm your password" required />
+            </div>
+          </label>
+
+          <button class="primary" type="submit" id="submitBtn">Create Account</button>
+          <div id="errorMessage" class="error-message" style="display: none; color: #ef4444; margin-top: 12px; text-align: center; font-size: 14px;"></div>
+        </form>
+
+        <p class="footer">
+          Already have an account?
+          <a class="link" href="login.html">Sign in here</a>
+        </p>
+      </div>
+    </div>
+
+    <script>
+      document.querySelector('.form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const form = e.target;
+        
+        // 1. Get form values
+        const full_name = form.full_name.value.trim();
+        const email = form.email.value.trim();
+        const role = form.role.value;
+        const location = form.location.value.trim();
+        const password = form.password.value;
+        const confirmPassword = form.confirmPassword.value;
+        
+        // 2. Reset UI
+        errorMessage.style.display = 'none';
+        errorMessage.textContent = '';
+        
+        // 3. Client-side Validation
+        if (password !== confirmPassword) {
+          errorMessage.textContent = 'Passwords do not match';
+          errorMessage.style.display = 'block';
+          return;
+        }
+        
+        // 4. Disable Button (Prevents double clicking)
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating Account...';
+        
+        try {
+          // 5. Send Request
+          const response = await fetch('/api/signup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              fullName: full_name, // MAPPED: full_name -> fullName for Node Server
+              email: email,
+              password: password,
+              role: role,
+              location: location
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Success! Store data and redirect
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('session_token', data.session_token); // Fixed: ensure this matches server response
+            
+            // Redirect to dashboard
+            window.location.href = 'dashboard.html';
+          } else {
+            // Server reported an error (e.g., Email exists)
+            throw new Error(data.message || 'Registration failed');
+          }
+        } catch (error) {
+          // Network or Server Error
+          console.error('Signup Error:', error);
+          errorMessage.textContent = error.message;
+          errorMessage.style.display = 'block';
+          
+          // CRITICAL: Re-enable button so user can try again
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Account';
+        }
+      });
+    </script>
+  </body>
+</html>
