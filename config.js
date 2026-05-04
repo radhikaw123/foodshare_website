@@ -6,7 +6,10 @@ const DB_CONFIG = {
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  ssl: {
+    rejectUnauthorized: false
+  }
 };
 
 module.exports = { DB_CONFIG };
