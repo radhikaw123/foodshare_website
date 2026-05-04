@@ -13,7 +13,8 @@ async function verifySession(token) {
   try {
     // UPDATED: Added u.profile_image to the SELECT list
     const [rows] = await pool.execute(
-      `SELECT s.user_id, u.id, u.full_name, u.email, u.role, u.location, u.profile_image 
+      `SELECT s.user_id, u.id, u.full_name, u.email, u.role, u.location, u.profile_image,
+              COALESCE(u.rating_sum,0) AS rating_sum, COALESCE(u.rating_count,0) AS rating_count
        FROM sessions s 
        INNER JOIN users u ON s.user_id = u.id 
        WHERE s.session_token = ? AND s.expires_at > NOW()`,

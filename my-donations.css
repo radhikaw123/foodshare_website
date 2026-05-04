@@ -40,11 +40,15 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  transition: background 0.2s ease;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .back-btn:hover {
-  background: #e5e7eb;
+  background: #f9fafb;
+  transform: translateY(-1px);
 }
 
 .header h1 {
@@ -99,7 +103,7 @@ body {
 .create-donation-btn {
   width: 100%;
   padding: 16px 24px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #05968cfa 0%, #059669 100%);
   color: #ffffff;
   border: none;
   border-radius: 16px;
@@ -157,7 +161,7 @@ body {
 .tab.active {
   background: #ffffff;
   color: #1a1a1a;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 4px #05968c;
 }
 
 .tab-count {
@@ -196,6 +200,21 @@ body {
   position: relative;
   display: flex;
   gap: 16px;
+}
+
+/* delete button inside donation item */
+.delete-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+  background-color: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.delete-btn:hover {
+  background-color: #dc2626;
 }
 
 .menu-btn {

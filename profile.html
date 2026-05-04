@@ -32,7 +32,7 @@
             
             <div class="badge-row">
               <span class="role-badge" id="display-role">User</span>
-              <div class="rating">
+              <div class="rating" id="rating-display" style="display:none;">
                 <span class="star">⭐</span>
                 <span class="rating-value">4.9</span>
               </div>
@@ -42,7 +42,7 @@
         </div>
         
         <button class="edit-profile-btn" onclick="window.location.href='edit-profile.html'">
-          <span class="edit-icon">✏️</span>
+          <span class="edit-icon"></span>
           <span>Edit Profile</span>
         </button>
       </div>
@@ -113,7 +113,7 @@
 
     <script>
       // 1. LOAD PROFILE DATA
-      document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener('DOMContentLoaded', async () => {
         // Retrieve the user string from localStorage
         const userStr = localStorage.getItem('user');
 
@@ -133,11 +133,93 @@
           if (user.profile_image) {
               document.getElementById('display-image').src = user.profile_image;
           }
-          
+
+          // refresh user data from server in case rating changed
+          try {
+            const vresp = await fetch('/api/verify', { credentials: 'include' });
+            const vdata = await vresp.json();
+            if (vdata.success && vdata.user) {
+              user.rating_sum = vdata.user.rating_sum;
+              user.rating_count = vdata.user.rating_count;
+              localStorage.setItem('user', JSON.stringify(vdata.user));
+            }
+          } catch (e) { /* ignore */ }
+
+          // once we have user info, fetch impact metrics
+          updateImpactMetrics(user);
         } else {
           window.location.href = 'login.html';
         }
       });
+
+      // compute & update impact statistics depending on role
+      async function updateImpactMetrics(user) {
+        try {
+          const resp = await fetch('/api/donations');
+          const data = await resp.json();
+          let all = [];
+          if (data.success && Array.isArray(data.donations)) {
+            all = data.donations;
+          } else if (Array.isArray(data)) {
+            all = data;
+          }
+          let total = 0;
+          let people = 0;
+
+          if (user.role === 'donor') {
+            const mine = all.filter(d => d.user_id === user.id);
+            total = mine.length;
+            people = new Set(mine.filter(d => d.recipient_id).map(d => d.recipient_id)).size;
+          } else if (user.role === 'volunteer') {
+            const mine = all.filter(d => d.volunteer_id === user.id);
+            total = mine.length;
+            people = new Set(mine.filter(d => d.recipient_id).map(d => d.recipient_id)).size;
+          } else if (user.role === 'recipient') {
+            const mine = all.filter(d => d.recipient_id === user.id);
+            total = mine.length;
+            people = new Set(mine.map(d => d.user_id)).size;
+          }
+
+          const totalElem = document.querySelector('.impact-card .stat-value.green');
+          const peopleElem = document.querySelector('.impact-card .stat-value.blue');
+          const totalLabel = document.querySelector('.impact-card .stat-label:nth-child(3)'); // nth-child hack might not work
+          // better grab by text?
+          // We'll just update text directly below
+
+          totalElem.textContent = total;
+          peopleElem.textContent = people;
+
+          const labelElems = document.querySelectorAll('.impact-card .stat-label');
+          if (user.role === 'recipient') {
+            labelElems[0].textContent = 'Total Requests';
+            labelElems[1].textContent = 'Donors Helped';
+          } else {
+            labelElems[0].textContent = 'Total Donations';
+            labelElems[1].textContent = 'People Helped';
+          }
+
+          // update rating value and visibility based on role
+          const ratingDisplay = document.getElementById('rating-display');
+          const ratingElem = document.querySelector('.profile-card .rating .rating-value');
+          
+          // Only show rating for donors and volunteers (recipients don't get rated)
+          if (user.role === 'recipient') {
+            ratingDisplay.style.display = 'none';
+          } else {
+            ratingDisplay.style.display = 'flex';
+            // Show rating only if user has received at least one rating
+            if (user.rating_count && user.rating_count > 0) {
+              const avg = (user.rating_sum / user.rating_count).toFixed(1);
+              ratingElem.textContent = avg;
+            } else {
+              // No ratings yet - show 0 for now
+              ratingElem.textContent = '0';
+            }
+          }
+        } catch (err) {
+          console.error('Error loading impact metrics', err);
+        }
+      }
 
       // 2. LOGOUT FUNCTIONALITY
       document.getElementById('logoutBtn').addEventListener('click', async () => {

@@ -1,9 +1,10 @@
 <?php
 // Database configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_HOST', 'foodshare-db.cby8gwiu2kol.eu-north-1.rds.amazonaws.com');
+define('DB_USER', 'admin');
+define('DB_PASS', 'RadhikaW6868');
 define('DB_NAME', 'foodshare_db');
+define('DB_PORT', 3306);
 
 // Create database connection
 function getDBConnection() {

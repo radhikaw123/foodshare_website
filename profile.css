@@ -31,16 +31,19 @@ body {
 }
 
 .back-btn {
-  font-size: 24px;
-  color: #1a1a1a;
-  text-decoration: none;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  transition: background 0.2s ease;
+    font-size: 24px;
+    color: #1a1a1a;
+    text-decoration: none;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .back-btn:hover {
@@ -168,23 +171,24 @@ body {
 .edit-profile-btn {
   width: 100%;
   padding: 12px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: #1ba098;
+  border: 1px solid #1ba098;
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #ffffff;
+  font-weight: bolder;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: 0.2s ease, border-color 0.2s ease;
 }
 
 .edit-profile-btn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: #065f46cf;
+  border-color: #065f46;
 }
 
 .edit-icon {

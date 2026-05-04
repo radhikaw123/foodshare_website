@@ -88,21 +88,22 @@
       </a>
 
 
-      <div class="stats-section donor-view" id="donor-stats">
+      <!-- unified stats section, updated dynamically based on role -->
+      <div class="stats-section" id="stats-section">
         <div class="stat-card">
           <div class="stat-icon green">📦</div>
           <div class="stat-number green" id="stat-total-donations">0</div>
-          <div class="stat-label">Total Donations</div>
+          <div class="stat-label" id="label-total">Total Donations</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon blue">👥</div>
-          <div class="stat-number blue">0</div>
-          <div class="stat-label">People Helped</div>
+          <div class="stat-number blue" id="stat-people-helped">0</div>
+          <div class="stat-label" id="label-people">People Helped</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon purple">📈</div>
-          <div class="stat-number purple">0kg</div>
-          <div class="stat-label">Food Saved</div>
+          <div class="stat-number purple" id="stat-food-saved">0kg</div>
+          <div class="stat-label" id="label-food">Food Saved</div>
         </div>
       </div>
 
@@ -123,7 +124,7 @@
       </div>
 
       <div class="cards-section">
-        <a href="my-donations.html" class="card my-donations" style="text-decoration: none; color: inherit;">
+        <a href="my-donations.html" id="my-donations-link" class="card my-donations" style="text-decoration: none; color: inherit;">
           <div class="card-icon green">📦</div>
           <h3 id="my-activity-label">My Donations</h3>
           <p id="my-donations-count">View history</p>
@@ -136,14 +137,11 @@
         </a>
       </div>
 
-      <div class="impact-card donor-view" id="donor-impact-card">
-        <h2>Your Impact This Month</h2>
-        <div class="motivational-message">
-          <span class="star-icon">⭐</span>
-          <p>Keep up the great work! You're making a real difference.</p>
-        </div>
-      </div>
-    </div>
+     <div class="impact-card donor-view" id="donor-impact-card">
+  <h2>Your Impact This Month</h2>
+ 
+  <p>⭐ Keep up the great work! You're making a real difference.</p>
+</div>
 
     <script>
       let currentUserRole = 'donor'; // Default
@@ -173,19 +171,47 @@
           const recipientElements = document.querySelectorAll('.recipient-view');
           const listHeader = document.getElementById('main-list-header');
           const activityLabel = document.getElementById('my-activity-label');
+          const myDonationsLink = document.getElementById('my-donations-link');
 
-          if (role === 'recipient') {
+          if (role === 'volunteer') {
+              // Volunteer View - show all donations list but update stats separately
+              donorElements.forEach(el => el.style.display = 'none');
+              recipientElements.forEach(el => el.style.display = 'none');
+              listHeader.textContent = "All Donations";
+              activityLabel.textContent = "All Donations";
+              myDonationsLink.href = "all-donations.html";
+              myDonationsLink.querySelector('.card-icon').textContent = '👁️';
+
+              // ensure stats section is visible with volunteer labels
+              document.getElementById('stats-section').style.display = 'flex';
+              document.getElementById('label-total').textContent = 'Deliveries';
+              document.getElementById('label-people').textContent = 'People Helped';
+              document.getElementById('label-food').textContent = 'Food Delivered';
+          } else if (role === 'recipient') {
               // Recipient View
               donorElements.forEach(el => el.style.display = 'none');
               recipientElements.forEach(el => el.style.display = 'flex');
-              listHeader.textContent = "Recent Requests"; // Or 'Nearby Donations' depending on preference
+              listHeader.textContent = "Recent Requests";
               activityLabel.textContent = "My Requests";
+              myDonationsLink.href = "my-donations.html";
+
+              // show stats section but with recipient-specific labels
+              document.getElementById('stats-section').style.display = 'flex';
+              document.getElementById('label-total').textContent = 'Requests';
+              document.getElementById('label-people').textContent = 'Donors';
+              document.getElementById('label-food').textContent = 'Food Received';
           } else {
               // Donor View
               donorElements.forEach(el => el.style.display = 'flex');
               recipientElements.forEach(el => el.style.display = 'none');
               listHeader.textContent = "Recent Donations";
               activityLabel.textContent = "My Donations";
+              myDonationsLink.href = "my-donations.html";
+
+              document.getElementById('stats-section').style.display = 'flex';
+              document.getElementById('label-total').textContent = 'Total Donations';
+              document.getElementById('label-people').textContent = 'People Helped';
+              document.getElementById('label-food').textContent = 'Food Saved';
           }
       }
 
@@ -198,17 +224,71 @@
               const response = await fetch('/api/donations');
               const data = await response.json();
 
-              if (!data.success || data.donations.length === 0) {
+              console.log('Donations response:', data);
+              console.log('Current user role:', currentUserRole);
+
+              // Handle both success and direct donations array
+              let allDonations = [];
+              if (data.success && data.donations) {
+                  allDonations = data.donations;
+              } else if (Array.isArray(data.donations)) {
+                  allDonations = data.donations;
+              } else if (Array.isArray(data)) {
+                  allDonations = data;
+              }
+
+              if (!allDonations || allDonations.length === 0) {
+                  console.log('No donations found');
                   renderEmptyState(donationListContainer);
                   return;
               }
 
-              const allDonations = data.donations;
               const user = JSON.parse(localStorage.getItem('user'));
               
               // --- 1. UPDATE STATS (Always Filtered to MY impact) ---
-              const myDonations = allDonations.filter(d => d.user_id === user.id);
-              document.getElementById('stat-total-donations').textContent = myDonations.length;
+              // determine stats based on role
+              let totalCount = 0;
+              let pplCount = 0;
+              let weightSum = 0;
+
+              if (currentUserRole === 'donor') {
+                  const myDonations = allDonations.filter(d => d.user_id === user.id);
+                  totalCount = myDonations.length;
+
+                  const helpedSet = new Set(myDonations.filter(d => d.recipient_id).map(d => d.recipient_id));
+                  pplCount = helpedSet.size;
+
+                  weightSum = myDonations.reduce((acc, d) => {
+                      const val = parseFloat(d.quantity) || 0;
+                      return acc + val;
+                  }, 0);
+
+                  // donor sees all donations feed
+                
+              } else if (currentUserRole === 'volunteer') {
+                  const myTasks = allDonations.filter(d => d.volunteer_id === user.id);
+                  totalCount = myTasks.length;
+
+                  const helpSet = new Set(myTasks.filter(d => d.recipient_id).map(d => d.recipient_id));
+                  pplCount = helpSet.size;
+
+                  weightSum = myTasks.reduce((acc, d) => acc + (parseFloat(d.quantity) || 0), 0);
+
+                  // volunteers also see full list
+              } else if (currentUserRole === 'recipient') {
+                  const myRequests = allDonations.filter(d => d.recipient_id === user.id);
+                  totalCount = myRequests.length;
+
+                  const donorSet = new Set(myRequests.map(d => d.user_id));
+                  pplCount = donorSet.size;
+
+                  weightSum = myRequests.reduce((acc, d) => acc + (parseFloat(d.quantity) || 0), 0);
+              }
+
+              // update stat elements
+              document.getElementById('stat-total-donations').textContent = totalCount;
+              document.getElementById('stat-people-helped').textContent = pplCount;
+              document.getElementById('stat-food-saved').textContent = weightSum + 'kg';
 
               // --- 2. UPDATE LIST (Different logic per role) ---
               let displayList = [];
@@ -217,7 +297,7 @@
                   // Recipient: Sees Available items to Request
                   displayList = allDonations.filter(d => d.status === 'available');
               } else {
-                  // Donor: Sees ALL donations (Global Feed) - FIXED HERE
+                  // Donor or Volunteer: Sees ALL donations (global feed)
                   displayList = allDonations;
               }
 
@@ -250,7 +330,7 @@
                 <h3>${donation.title}</h3>
                 <p class="donation-weight">${donation.quantity}</p>
                 <p class="donation-location">📍 ${donation.pickup_location}</p>
-                <p style="font-size:12px; color:#888;">By: ${donation.donor_name || 'Unknown'}</p>
+                <p style="font-size:12px;color:#888;font-style: italic;">By: ${donation.donor_name || 'Unknown'}</p>
               </div>
               <span class="status-badge ${donation.status}">${donation.status}</span>
               ${actionButton}
@@ -279,7 +359,9 @@
           try {
               const response = await fetch(`/api/donations/${donationId}/request`, {
                   method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' }
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ recipient_location: prompt('Enter your delivery address:') || '' })
               });
               const result = await response.json();
 

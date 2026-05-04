@@ -7,7 +7,7 @@
   }
   
   body {
-    background-color: #f3f4f6;
+    background-color: #d0e0d7;
     color: #1f2937;
     min-height: 100vh;
   }
@@ -38,15 +38,18 @@
   
   .back-btn {
     font-size: 24px;
+    color: #1a1a1a;
     text-decoration: none;
-    color: #374151;
     width: 40px;
     height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: background 0.2s;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    transition: background 0.2s ease, transform 0.2s ease;
   }
   
   .back-btn:hover {

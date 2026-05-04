@@ -37,22 +37,57 @@
 
           <div class="input-group">
             <label>Full Name</label>
-            <input type="text" id="fullName" name="fullName" placeholder="Enter Your Name" required />
+            <input 
+              type="text" 
+              id="fullName" 
+              name="fullName" 
+              placeholder="Enter Your Name" 
+              required 
+            />
           </div>
 
           <div class="input-group">
             <label>Email Address</label>
-            <input type="email" id="email" name="email" placeholder="Enter Email Address" required />
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              placeholder="Enter Email Address" 
+              required 
+            />
+          </div>
+
+          <div class="input-group">
+            <label>Mobile Number</label>
+            <input 
+              type="tel" 
+              id="mobileNumber" 
+              name="mobileNumber" 
+              placeholder="(973) 025-6073"
+              maxlength="14"
+            />
+            <p class="input-hint">Enter your 10-digit phone number</p>
           </div>
 
           <div class="input-group">
             <label>Location</label>
-            <input type="text" id="location" name="location" placeholder="Enter Location" />
+            <input 
+              type="text" 
+              id="location" 
+              name="location" 
+              placeholder="Enter Your City or Address" 
+            />
           </div>
           
           <div class="input-group">
             <label>Role (Read Only)</label>
-            <input type="text" id="role" name="role" disabled style="opacity: 0.6; background: #eee;" />
+            <input 
+              type="text" 
+              id="role" 
+              name="role" 
+              disabled 
+              style="opacity: 0.6; background: #eee;" 
+            />
           </div>
         </div>
 
@@ -61,98 +96,187 @@
     </div>
 
     <script>
-        // Load current user data
-        document.addEventListener('DOMContentLoaded', () => {
-          // We can try to get from local storage first for speed
-          const user = JSON.parse(localStorage.getItem('user'));
-          if (!user) {
-            window.location.href = 'login.html';
-            return;
-          }
-  
-          // Populate text fields
-          document.getElementById('fullName').value = user.full_name || '';
-          document.getElementById('email').value = user.email || '';
-          document.getElementById('location').value = user.location || '';
-          document.getElementById('role').value = user.role || '';
-          
-          // Show existing image
-          if (user.profile_image) {
-              document.getElementById('profileImagePreview').src = user.profile_image;
-          }
-        });
-  
-        // Handle Image Preview (Visual only)
-        document.getElementById('profileUpload').addEventListener('change', function(e) {
-          if (e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-              document.getElementById('profileImagePreview').src = e.target.result;
-            }
-            reader.readAsDataURL(e.target.files[0]);
-          }
-        });
-  
-        // Handle Form Submit (Send to Server)
-        document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          
-          const btn = document.querySelector('.save-btn');
-          btn.textContent = 'Saving...';
-          btn.disabled = true;
+      // Load current user data
+      document.addEventListener('DOMContentLoaded', () => {
+        // Get user from local storage
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
 
-          // Prepare data
-          const full_name = document.getElementById('fullName').value;
-          const email = document.getElementById('email').value;
-          const location = document.getElementById('location').value;
-          const fileInput = document.getElementById('profileUpload');
-          
-          let profile_image = null;
+        // Populate text fields
+        document.getElementById('fullName').value = user.full_name || '';
+        document.getElementById('email').value = user.email || '';
+        document.getElementById('location').value = user.location || '';
+        
+        // Format mobile number for display (remove +1 prefix if present)
+        if (user.mobile_number) {
+          let mobileDisplay = user.mobile_number;
+          // Remove +1 prefix if it exists
+          if (mobileDisplay.startsWith('+1')) {
+            mobileDisplay = mobileDisplay.substring(2);
+          }
+          // Format the number
+          mobileDisplay = formatPhoneForDisplay(mobileDisplay);
+          document.getElementById('mobileNumber').value = mobileDisplay;
+        }
+        
+        document.getElementById('role').value = user.role || '';
+        
+        // Show existing image
+        if (user.profile_image) {
+          document.getElementById('profileImagePreview').src = user.profile_image;
+        }
+      });
 
+      // Format phone number for display only (visual formatting)
+      function formatPhoneForDisplay(value) {
+        // Remove all non-digits
+        let digits = value.replace(/\D/g, '');
+        
+        // Limit to 10 digits
+        if (digits.length > 10) {
+          digits = digits.slice(0, 10);
+        }
+
+        // Format as (555) 123-4567
+        let formatted = '';
+        if (digits.length > 0) {
+          formatted = '(' + digits.slice(0, 3);
+        }
+        if (digits.length > 3) {
+          formatted += ') ' + digits.slice(3, 6);
+        }
+        if (digits.length > 6) {
+          formatted += '-' + digits.slice(6, 10);
+        }
+
+        return formatted;
+      }
+
+      // Format phone number as user types (visual only)
+      document.getElementById('mobileNumber').addEventListener('input', function(e) {
+        e.target.value = formatPhoneForDisplay(e.target.value);
+      });
+
+      // Validate phone number - extract only digits and check length
+      function validatePhoneNumber(phoneNumber) {
+        const cleaned = phoneNumber.replace(/\D/g, '');
+        return cleaned.length === 10;
+      }
+
+      // Get clean phone number (digits only)
+      function getCleanPhoneNumber(phoneNumber) {
+        return phoneNumber.replace(/\D/g, '');
+      }
+
+      // Handle Image Preview (Visual only)
+      document.getElementById('profileUpload').addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            document.getElementById('profileImagePreview').src = e.target.result;
+          };
+          reader.readAsDataURL(e.target.files[0]);
+        }
+      });
+
+      // Handle Form Submit (Send to Server)
+      document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Get form values
+        const full_name = document.getElementById('fullName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const location = document.getElementById('location').value.trim();
+        const mobileNumber = document.getElementById('mobileNumber').value.trim();
+        
+        // Validate required fields
+        if (!full_name || !email) {
+          alert('Please fill in all required fields (Name and Email)');
+          return;
+        }
+
+        // Validate phone number if provided
+        if (mobileNumber && !validatePhoneNumber(mobileNumber)) {
+          alert('Please enter a valid 10-digit phone number');
+          return;
+        }
+
+        const btn = document.querySelector('.save-btn');
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+
+        const fileInput = document.getElementById('profileUpload');
+        let profile_image = null;
+
+        try {
           // 1. Process Image if new one selected
           if (fileInput.files && fileInput.files[0]) {
-             profile_image = await new Promise((resolve) => {
-                 const reader = new FileReader();
-                 reader.onload = (e) => resolve(e.target.result);
-                 reader.readAsDataURL(fileInput.files[0]);
-             });
+            profile_image = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = (e) => resolve(e.target.result);
+              reader.readAsDataURL(fileInput.files[0]);
+            });
           }
 
-          try {
-              // 2. Send to API
-              const response = await fetch('/api/profile', {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                      full_name,
-                      email,
-                      location,
-                      profile_image // sends null if no new image, handled by server
-                  })
-              });
+          // 2. Prepare request body
+          const requestBody = {
+            full_name,
+            email,
+            location,
+            mobile_number: mobileNumber ? getCleanPhoneNumber(mobileNumber) : ''
+          };
 
-              const result = await response.json();
-
-              if (result.success) {
-                  // 3. Update Local Storage with the Response from Server
-                  // This ensures local matches server immediately
-                  localStorage.setItem('user', JSON.stringify(result.user));
-                  
-                  btn.textContent = 'Saved!';
-                  setTimeout(() => { window.location.href = 'profile.html'; }, 800);
-              } else {
-                  alert('Error: ' + result.message);
-                  btn.textContent = 'Save Changes';
-                  btn.disabled = false;
-              }
-
-          } catch (error) {
-              console.error('Error:', error);
-              alert('Failed to connect to server');
-              btn.textContent = 'Save Changes';
-              btn.disabled = false;
+          // Only add profile_image if a new one was selected
+          if (profile_image) {
+            requestBody.profile_image = profile_image;
           }
-        });
-      </script>
+
+          console.log('Sending data:', requestBody); // Debug log
+
+          // 3. Send to API
+          const response = await fetch('/api/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(requestBody)
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API profile update HTTP error:', response.status, errorText);
+            alert('Server error: ' + (response.statusText || 'Failed to save profile'));
+            btn.textContent = 'Save Changes';
+            btn.disabled = false;
+            return;
+          }
+
+          const result = await response.json();
+          console.log('API Response:', result); // Debug log
+
+          if (result.success) {
+            // 4. Update Local Storage with the Response from Server
+            localStorage.setItem('user', JSON.stringify(result.user));
+            
+            btn.textContent = 'Saved!';
+            setTimeout(() => { 
+              window.location.href = 'profile.html'; 
+            }, 800);
+          } else {
+            alert('Error: ' + (result.message || 'Failed to save profile'));
+            btn.textContent = 'Save Changes';
+            btn.disabled = false;
+          }
+
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Failed to save profile. Please check your connection and try again.');
+          btn.textContent = 'Save Changes';
+          btn.disabled = false;
+        }
+      });
+    </script>
   </body>
 </html>

@@ -11,6 +11,19 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <style>
+      /* Modal for requesting donation address */
+      .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:1000; }
+      .modal { background: white; width: 92%; max-width: 480px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
+      .modal-header { padding: 14px 16px; border-bottom: 1px solid #eef2f7; font-weight:700; }
+      .modal-body { padding: 12px 16px; }
+      .modal-footer { padding: 12px 16px; border-top: 1px solid #eef2f7; display:flex; gap:8px; justify-content:flex-end; }
+      .btn { padding: 10px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight:600; }
+      .btn.cancel { background:#f3f4f6; color:#374151; }
+      .btn.primary { background:#10b981; color:white; }
+      .hidden { display:none; }
+      textarea#recipient-address { width:100%; min-height:80px; padding:10px; border-radius:8px; border:1px solid #e5e7eb; resize:vertical; }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -23,6 +36,21 @@
       <div class="banner">
         <h2>Available Food</h2>
         <p>These items are currently available for pickup in your community.</p>
+      </div>
+
+      <!-- Request Address Modal -->
+      <div id="request-modal-backdrop" class="modal-backdrop hidden">
+        <div class="modal">
+          <div class="modal-header">Provide your pickup address</div>
+          <div class="modal-body">
+            <p>Please enter the address where you would like the donation delivered or picked up. This will be shared with the donor and volunteers.</p>
+            <textarea id="recipient-address" placeholder="Enter your address (street, city, any instructions)"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button class="btn cancel" onclick="closeRequestModal()">Cancel</button>
+            <button class="btn primary" onclick="submitRequestModal()">Submit Request</button>
+          </div>
+        </div>
       </div>
 
       <div class="search-bar" style="background-color: white; border: 1px solid #d1d5db;">
@@ -108,66 +136,94 @@
               return;
           }
 
-          items.forEach(item => {
-              const img = item.image_data || 'vegetables.jpg';
-              const date = new Date(item.created_at).toLocaleDateString();
+              items.forEach(item => {
+                  const img = item.image_data || 'vegetables.jpg';
+                  const date = new Date(item.created_at).toLocaleDateString();
 
-              const html = `
-                <div class="donation-card">
-                  <div class="card-image-container">
-                    <img src="${img}" alt="${item.title}" class="card-img" />
-                    <span class="status-badge">Available</span>
-                  </div>
+                  const html = `
+                    <div class="donation-card">
+                      <div class="card-image-container">
+                        <img src="${img}" alt="${item.title}" class="card-img" />
+                        <span class="status-badge">Available</span>
+                      </div>
                   
-                  <div class="card-content">
-                    <h3 class="card-title">${item.title}</h3>
+                      <div class="card-content">
+                        <h3 class="card-title">${item.title}</h3>
                     
-                    <div class="card-details">
-                        <div class="detail-row">
-                            <span>📦 ${item.quantity}</span>
-                            <span>•</span>
-                            <span>${item.food_type || 'Food'}</span>
+                        <div class="card-details">
+                            <div class="detail-row">
+                                <span>📦 ${item.quantity}</span>
+                                <span>•</span>
+                                <span>${item.food_type || 'Food'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>📍 ${item.pickup_location}</span>
+                            </div>
+                            <div class="detail-row meta">
+                                <span>By: ${item.donor_name || 'Donor'}</span>
+                                <span>${date}</span>
+                            </div>
                         </div>
-                        <div class="detail-row">
-                            <span>📍 ${item.pickup_location}</span>
-                        </div>
-                        <div class="detail-row meta">
-                            <span>By: ${item.donor_name || 'Donor'}</span>
-                            <span>${date}</span>
-                        </div>
-                    </div>
 
-                    <button class="request-btn" onclick="requestItem(${item.id})">
-                      Request This Food
-                    </button>
-                  </div>
-                </div>
-              `;
-              container.insertAdjacentHTML('beforeend', html);
-          });
+                        <button class="request-btn" onclick="requestItem(${item.id})">
+                          Request This Food
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                  container.insertAdjacentHTML('beforeend', html);
+              });
       }
 
-      async function requestItem(id) {
-          if(!confirm("Request this donation? The donor will be notified.")) return;
+        let pendingRequestId = null;
+
+        function requestItem(id) {
+          // Open modal to collect recipient address
+          pendingRequestId = id;
+          document.getElementById('recipient-address').value = '';
+          document.getElementById('request-modal-backdrop').classList.remove('hidden');
+        document.getElementById('recipient-address').focus();
+        }
+
+        function closeRequestModal() {
+          pendingRequestId = null;
+          document.getElementById('request-modal-backdrop').classList.add('hidden');
+        }
+
+        async function submitRequestModal() {
+          const addr = document.getElementById('recipient-address').value.trim();
+          if (!addr) {
+            alert('Please enter your address before submitting.');
+            return;
+          }
+
+          if (!pendingRequestId) {
+          alert('No donation selected.');
+          closeRequestModal();
+          return;
+          }
 
           try {
-              const response = await fetch(`/api/donations/${id}/request`, {
-                  method: 'PUT',
-                  headers: {'Content-Type': 'application/json'}
+              const response = await fetch(`/api/donations/${pendingRequestId}/request`, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ recipient_location: addr })
               });
-              const result = await response.json();
+            const result = await response.json();
               
-              if (result.success) {
-                  alert("Success! You can view this in 'My Requests'.");
-                  loadNearbyDonations(); // Reloads data
-                  document.getElementById('search-input').value = ''; // Clear search
-              } else {
-                  alert("Error: " + result.message);
-              }
+            if (result.success) {
+              alert("Request submitted — donor and volunteers will be notified.");
+              closeRequestModal();
+              await loadNearbyDonations(); // Refresh list
+            } else {
+              alert('Error: ' + result.message);
+            }
           } catch (e) {
-              alert("Network error");
+            console.error(e);
+            alert('Network error');
           }
-      }
+        }
     </script>
   </body>
 </html>

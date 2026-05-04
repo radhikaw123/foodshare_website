@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     role ENUM('donor', 'recipient', 'volunteer') NOT NULL,
     location VARCHAR(255),
+    mobile_number VARCHAR(20),
+    profile_image LONGTEXT DEFAULT NULL,
+    rating_sum INT DEFAULT 0,
+    rating_count INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -39,7 +43,33 @@ CREATE TABLE IF NOT EXISTS donations (
     pickup_location VARCHAR(255),
     best_before_date VARCHAR(50),
     image_data LONGTEXT,
-    status ENUM('available', 'in-transit', 'completed') DEFAULT 'available',
+    status ENUM('available', 'requested', 'in-transit', 'completed') DEFAULT 'available',
+    recipient_id INT,
+    recipient_location VARCHAR(255),
+    volunteer_id INT,
+    donor_rating TINYINT NULL,
+    volunteer_rating TINYINT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (volunteer_id) REFERENCES users(id) ON DELETE SET NULL
 );
+-- Add OTP table for delivery verification
+CREATE TABLE IF NOT EXISTS delivery_otp (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    donation_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    otp_code VARCHAR(6) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    is_used BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (donation_id) REFERENCES donations(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Add profile_image column to users if not exists
+ALTER TABLE users ADD COLUMN profile_image LONGTEXT DEFAULT NULL;
+CREATE INDEX idx_donations_user ON donations(user_id);
+CREATE INDEX idx_donations_status ON donations(status);
+CREATE INDEX idx_donations_recipient ON donations(recipient_id);
+CREATE INDEX idx_delivery_otp_donation ON delivery_otp(donation_id);

@@ -3,43 +3,55 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign In - Left Lover</title>
+    <title>Sign In - FoodShare</title>
     <link rel="stylesheet" href="login.css" />
   </head>
   <body>
     <div class="page">
       <div class="card">
-        <h1>Welcome Back</h1>
-        <p class="subtitle">Sign in to continue sharing and reducing food waste</p>
+        <div class="card-left">
+          <div class="brand-section">
+            <div class="brand-icon">🍃</div>
+            <div class="brand-name">FoodShare</div>
+          </div>
+          <h2 class="welcome-text">Welcome Back!</h2>
+          <p class="left-tagline">To sign in to your account, use your email and password.</p>
+         
+        </div>
 
-        <form class="form" action="#" method="post">
-          <label class="field">
-            <span>Email</span>
-            <div class="input">
-              <span class="icon"></span>
-              <input type="email" name="email" placeholder="Enter your email" required />
-            </div>
-          </label>
+        <div class="card-right">
+          <h1>Create Account</h1>
+          
+          
+          
+          <p class="social-subtitle">Use your email for login</p>
 
-          <label class="field">
-            <span>Password</span>
-            <div class="input">
-              <span class="icon"></span>
-              <input type="password" name="password" placeholder="Enter your password" required />
-              <button class="icon-btn" type="button" aria-label="toggle password visibility">👁️</button>
-            </div>
-          </label>
+          <form class="form" action="#" method="post">
+        
 
-          <a class="link forget" href="#">Forgot password?</a>
+            <label class="field">
+              <div class="input">
+                <span class="icon">✉️</span>
+                <input type="email" name="email" placeholder="Email" required />
+              </div>
+            </label>
 
-          <button class="primary" type="submit" id="submitBtn">Sign In</button>
-          <div id="errorMessage" class="error-message" style="display: none; color: #ef4444; margin-top: 12px; text-align: center; font-size: 14px;"></div>
-        </form>
+            <label class="field">
+              <div class="input">
+                <span class="icon">🔒</span>
+                <input type="password" name="password" placeholder="Password" required />
+              </div>
+            </label>
 
-        <p class="footer">
-          Don't have an account?
-          <a class="link" href="signup.html">Sign up here</a>
-        </p>
+            <button class="primary" type="submit" id="submitBtn">SIGN IN</button>
+            <div id="errorMessage" class="error-message" style="display: none; color: #ef4444; margin-top: 12px; text-align: center; font-size: 14px;"></div>
+          </form>
+
+          <p class="footer">
+            Already have an account?
+            <a class="link" href="signup.html">Sign up here</a>
+          </p>
+        </div>
       </div>
     </div>
     <script>

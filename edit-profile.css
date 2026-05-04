@@ -40,7 +40,7 @@
   
   .back-btn {
     font-size: 24px;
-    color: #3E4462;
+    color: #1a1a1a;
     text-decoration: none;
     width: 40px;
     height: 40px;
@@ -48,7 +48,10 @@
     align-items: center;
     justify-content: center;
     border-radius: 12px;
-    transition: background 0.2s ease;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    transition: background 0.2s ease, transform 0.2s ease;
   }
   
   .back-btn:hover {
@@ -181,3 +184,58 @@
   .save-btn:active {
     transform: scale(0.98);
   }
+  /* Add these styles to your existing CSS */
+
+/* Phone Input Wrapper */
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f9fafb;
+}
+
+.country-code {
+  padding: 12px 12px;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  font-weight: 600;
+  border-right: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.phone-input-wrapper input {
+  flex: 1;
+  border: none;
+  padding: 12px 12px;
+  font-size: 14px;
+  background-color: transparent;
+  outline: none;
+}
+
+.phone-input-wrapper input:focus {
+  background-color: #fff;
+}
+
+/* Input Hint Text */
+.input-hint {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .phone-input-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .country-code {
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+  }
+}

@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delivery Task - FoodShare</title>
+    <link rel="stylesheet" href="donation-detail.css" />
+    <link rel="stylesheet" href="otp-modal.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <a href="all-donations.html" class="back-btn">←</a>
+        <h1>Delivery Task</h1>
+        <div style="width: 40px;"></div>
+      </header>
+
+      <!-- Donation Title and Image -->
+      <div class="donation-header">
+        <img id="donation-image" src="vegetables.jpg" alt="Donation" class="donation-banner" />
+        <div class="donation-title-section">
+          <h2 id="donation-title">Loading...</h2>
+          <div class="donation-meta">
+            <span class="meta-badge" id="food-type">Food Type</span>
+            <span class="meta-badge" id="quantity">Quantity</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pickup Location Section -->
+      <div class="location-section">
+        <div class="location-header">
+          <span class="location-icon">📍</span>
+          <h3>Pickup Location</h3>
+        </div>
+        <div class="location-content">
+          <div class="location-details">
+            <p class="location-name" id="pickup-name">Loading...</p>
+            <p class="location-address" id="pickup-address">Loading...</p>
+            <p class="location-donor" id="donor-info">Donor: Loading...</p>
+          </div>
+          <div class="location-actions">
+            <button class="action-btn call-btn" onclick="callDonor()" title="Call donor">
+              <span class="action-icon">☎️</span>
+              <span>Call</span>
+            </button>
+            <button class="action-btn message-btn" onclick="messageDonor()" title="Message donor">
+              <span class="action-icon">💬</span>
+              <span>Message</span>
+            </button>
+            <button class="action-btn navigate-btn" onclick="navigateToPickup()">
+              <span class="action-icon">📍</span>
+              <span>Navigate</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delivery Location Section -->
+      <div class="location-section">
+        <div class="location-header">
+          <span class="location-icon">📌</span>
+          <h3>Delivery Location</h3>
+        </div>
+        <div class="location-content">
+          <div class="location-details">
+            <p class="location-name" id="delivery-name">Community Center</p>
+            <p class="location-address" id="delivery-address">456 Oak Ave, Midtown</p>
+            <p class="location-receiver" id="receiver-info">Receiver: Not yet assigned</p>
+          </div>
+          <div class="location-actions">
+            <button class="action-btn directions-btn" onclick="getDeliveryDirections()">
+              <span class="action-icon">🗺️</span>
+              <span>Get Delivery Directions</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delivery Instructions Section -->
+      <div class="instructions-section">
+        <h3 class="instructions-title">Delivery Instructions</h3>
+        <div class="instructions-content">
+          <p class="instructions-header" id="instructions-header">Special Instructions:</p>
+          <ul class="instructions-list" id="instructions-list">
+            <li>Loading...</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Donation Description -->
+      <div class="description-section" id="description-section" style="display: none;">
+        <h3>About This Donation</h3>
+        <p id="donation-description">Loading...</p>
+      </div>
+
+      <!-- Delivery Reward Section -->
+      <div class="reward-section">
+        <div class="reward-content">
+          <h4>Delivery Reward</h4>
+          <p class="reward-points" id="reward-points">+50 volunteer points</p>
+        </div>
+        <div class="reward-icon">🎁</div>
+      </div>
+
+      <!-- Complete Delivery Button -->
+      <button class="complete-btn" onclick="completeDelivery()" id="complete-btn">
+        <span class="checkmark">✓</span>
+        <span>Complete Delivery</span>
+      </button>
+
+      <!-- Status Badge -->
+      <div class="status-info">
+        <p>Status: <span id="donation-status" class="status-badge">available</span></p>
+        <p>Posted: <span id="donation-date">Loading...</span></p>
+      </div>
+    </div>
+
+    <!-- Call Confirmation Modal -->
+    <div id="call-modal-backdrop" class="call-modal-backdrop" style="display:none;">
+      <div class="call-modal">
+        <div class="call-modal-header">
+          <h2>Call Donor</h2>
+          <button class="close-btn" onclick="closeCallModal()">✕</button>
+        </div>
+        
+        <div class="call-modal-body">
+          <p class="call-instruction" id="call-instruction">Ready to call?</p>
+          <div class="call-info">
+            <p class="call-donor-name" id="call-donor-name"></p>
+            <p class="call-phone" id="call-phone"></p>
+          </div>
+        </div>
+
+        <div class="call-modal-footer">
+          <button class="btn btn-cancel" onclick="closeCallModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="initiateCall()" id="initiate-call-btn">Call Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OTP Verification Modal -->
+    <div id="otp-modal-backdrop" class="otp-modal-backdrop" style="display:none;">
+      <div class="otp-modal">
+        <div class="otp-modal-header">
+          <h2>Verify Delivery</h2>
+          <button class="close-btn" onclick="closeOtpModal()">✕</button>
+        </div>
+        
+        <div class="otp-modal-body">
+          <p class="otp-instruction">Enter the 6-digit code sent to the receiver's phone/email:</p>
+          
+          <div class="otp-input-group">
+            <input 
+              type="text" 
+              id="otp-input" 
+              class="otp-input" 
+              placeholder="000000" 
+              maxlength="6"
+              inputmode="numeric"
+            />
+            <span class="otp-timer" id="otp-timer">Expires in: 10:00</span>
+          </div>
+
+          <div class="otp-status" id="otp-status">
+            <p id="otp-message"></p>
+          </div>
+
+          <button class="resend-otp-btn" onclick="resendOtp()" id="resend-btn" style="display:none;">
+            Resend OTP
+          </button>
+        </div>
+
+        <div class="otp-modal-footer">
+          <button class="btn btn-cancel" onclick="closeOtpModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="submitOtp()" id="verify-otp-btn">Verify OTP</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentDonation = null;
+      let donationId = null;
+      let otpTimerInterval = null;
+      let otpTimeRemaining = 600; // 10 minutes
+      let donorPhoneNumber = null;
+      let donorName = null;
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        // Get donation ID from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        donationId = urlParams.get('id');
+
+        if (!donationId) {
+          alert('No donation ID provided');
+          window.location.href = 'all-donations.html';
+          return;
+        }
+
+        // Verify user is logged in and is a volunteer
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const currentUser = JSON.parse(userStr);
+        if (currentUser.role !== 'volunteer') {
+          window.location.href = 'dashboard.html';
+          return;
+        }
+
+        // Load donation details
+        await loadDonationDetails();
+      });
+
+      async function loadDonationDetails() {
+        try {
+          const response = await fetch(`/api/donations/${donationId}`, { credentials: 'include' });
+          const data = await response.json();
+
+          if (!data.success) {
+            alert('Failed to load donation details');
+            window.location.href = 'all-donations.html';
+            return;
+          }
+
+          currentDonation = data.donation;
+          donorPhoneNumber = currentDonation.donor_phone || null;
+          donorName = currentDonation.donor_name || 'Donor';
+          if (!donorPhoneNumber) {
+            await fetchDonorDetails();
+          }
+          renderDonationDetails();
+        } catch (error) {
+          console.error('Error loading donation:', error);
+          alert('Error loading donation details');
+          window.location.href = 'all-donations.html';
+        }
+      }
+
+      async function fetchDonorDetails() {
+        try {
+          const response = await fetch(`/api/users/${currentDonation.user_id}`, { credentials: 'include' });
+          const data = await response.json();
+
+          if (data.success && data.user) {
+            donorPhoneNumber = data.user.mobile_number || null;
+            donorName = data.user.full_name || currentDonation.donor_name;
+          } else {
+            console.warn('Could not fetch donor details');
+          }
+        } catch (error) {
+          console.error('Error fetching donor details:', error);
+        }
+      }
+
+      function renderDonationDetails() {
+        const d = currentDonation;
+
+        // Header Info
+        document.getElementById('donation-title').textContent = d.title;
+        document.getElementById('food-type').textContent = d.food_type;
+        document.getElementById('quantity').textContent = d.quantity;
+        document.getElementById('donation-image').src = d.image_data || 'vegetables.jpg';
+
+        // Pickup Location
+        document.getElementById('pickup-name').textContent = d.pickup_location.split('\n')[0] || d.pickup_location;
+        document.getElementById('pickup-address').textContent = d.pickup_location;
+        document.getElementById('donor-info').textContent = `Donor: ${donorName || d.donor_name}`;
+
+        // Delivery Location — use donation-specific recipient_location first, otherwise user location
+        const receiverLocation = d.recipient_location || d.receiver_location || '';
+        document.getElementById('delivery-name').textContent = receiverLocation ? 'Receiver Location' : 'Delivery Location';
+        document.getElementById('delivery-address').textContent = receiverLocation || 'Not specified';
+
+        if (d.receiver_name) {
+          document.getElementById('receiver-info').textContent = `Receiver: ${d.receiver_name}`;
+        } else {
+          document.getElementById('receiver-info').textContent = 'Receiver: Not yet assigned';
+        }
+
+        // Instructions
+        if (d.description) {
+          const instructions = d.description.split('\n').filter(line => line.trim());
+          const list = document.getElementById('instructions-list');
+          list.innerHTML = '';
+          if (instructions.length > 0) {
+            instructions.forEach(instruction => {
+              const li = document.createElement('li');
+              li.textContent = instruction;
+              list.appendChild(li);
+            });
+          } else {
+            const li = document.createElement('li');
+            li.textContent = 'No special instructions';
+            list.appendChild(li);
+          }
+
+          // Show description section if there's more info
+          const descSection = document.getElementById('description-section');
+          descSection.style.display = 'block';
+          document.getElementById('donation-description').textContent = d.description;
+        }
+
+        // Reward Points
+        const pointsReward = Math.min(50 + (d.quantity ? parseInt(d.quantity) * 5 : 0), 150);
+        document.getElementById('reward-points').textContent = `+${pointsReward} volunteer points`;
+
+        // Status
+        const statusBadge = document.getElementById('donation-status');
+        statusBadge.textContent = d.status.replace('-', ' ').toUpperCase();
+        statusBadge.className = `status-badge ${d.status}`;
+
+        // Date
+        const dateObj = new Date(d.created_at);
+        document.getElementById('donation-date').textContent = dateObj.toLocaleDateString();
+
+        // Update button state
+        const completeBtn = document.getElementById('complete-btn');
+        if (d.status === 'completed') {
+          completeBtn.disabled = true;
+          completeBtn.textContent = '✓ Delivery Completed';
+          completeBtn.style.opacity = '0.6';
+        } else if (d.status !== 'in-transit') {
+          // only allow action when delivery is actually underway
+          completeBtn.disabled = true;
+          completeBtn.style.opacity = '0.6';
+        } else {
+          // in-transit, button should be available
+          completeBtn.disabled = false;
+          completeBtn.style.opacity = '1';
+        }
+      }
+
+      function callDonor() {
+        if (!donorPhoneNumber) {
+          alert('Donor phone number not available. Please try again later.');
+          return;
+        }
+        openCallModal();
+      }
+
+      function messageDonor() {
+        alert('Opening chat with ' + (donorName || currentDonation.donor_name) + '...\nMessaging feature would be integrated here.');
+      }
+
+      function navigateToPickup() {
+        const location = encodeURIComponent(currentDonation.pickup_location);
+        window.open(`https://www.google.com/maps/search/${location}`, '_blank');
+      }
+
+      function getDeliveryDirections() {
+        const pickupLocation = encodeURIComponent(currentDonation.pickup_location);
+        const deliveryLocation = encodeURIComponent('456 Oak Ave, Midtown');
+        window.open(`https://www.google.com/maps/dir/${pickupLocation}/${deliveryLocation}`, '_blank');
+      }
+
+      // ===== CALL MODAL FUNCTIONS =====
+
+      function openCallModal() {
+        document.getElementById('call-donor-name').textContent = donorName || currentDonation.donor_name;
+        document.getElementById('call-phone').textContent = formatPhoneNumber(donorPhoneNumber);
+        document.getElementById('call-modal-backdrop').style.display = 'flex';
+      }
+
+      function closeCallModal() {
+        document.getElementById('call-modal-backdrop').style.display = 'none';
+      }
+
+      function formatPhoneNumber(phone) {
+        if (!phone) return 'N/A';
+        const cleaned = phone.replace(/\D/g, '');
+        if (cleaned.length === 10) {
+          return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+        }
+        return phone;
+      }
+
+      function initiateCall() {
+        if (!donorPhoneNumber) {
+          alert('Phone number not available');
+          return;
+        }
+        
+        const phoneLink = `tel:${donorPhoneNumber.replace(/\D/g, '')}`;
+        window.location.href = phoneLink;
+        closeCallModal();
+      }
+
+      // ===== OTP MODAL FUNCTIONS =====
+
+      function openOtpModal() {
+        const backdrop = document.getElementById('otp-modal-backdrop');
+        backdrop.style.display = 'flex';
+        document.getElementById('otp-input').focus();
+        startOtpTimer();
+      }
+
+      function closeOtpModal() {
+        document.getElementById('otp-modal-backdrop').style.display = 'none';
+        document.getElementById('otp-input').value = '';
+        if (otpTimerInterval) clearInterval(otpTimerInterval);
+        resetOtpStatus();
+      }
+
+      function startOtpTimer() {
+        otpTimeRemaining = 600;
+        if (otpTimerInterval) clearInterval(otpTimerInterval);
+        
+        otpTimerInterval = setInterval(() => {
+          otpTimeRemaining--;
+          const minutes = Math.floor(otpTimeRemaining / 60);
+          const seconds = otpTimeRemaining % 60;
+          document.getElementById('otp-timer').textContent = 
+            `Expires in: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+          
+          if (otpTimeRemaining <= 0) {
+            clearInterval(otpTimerInterval);
+            document.getElementById('otp-input').disabled = true;
+            document.getElementById('verify-otp-btn').disabled = true;
+            document.getElementById('otp-timer').classList.add('expired');
+            document.getElementById('resend-btn').style.display = 'block';
+          }
+        }, 1000);
+      }
+
+      function showOtpStatus(message, type) {
+        const statusDiv = document.getElementById('otp-status');
+        const messageP = document.getElementById('otp-message');
+        
+        statusDiv.className = `otp-status ${type}`;
+        messageP.textContent = message;
+        statusDiv.style.display = 'block';
+      }
+
+      function resetOtpStatus() {
+        document.getElementById('otp-status').style.display = 'none';
+        document.getElementById('otp-status').className = 'otp-status';
+      }
+
+      async function submitOtp() {
+        const otpCode = document.getElementById('otp-input').value.trim();
+        
+        if (!otpCode || otpCode.length !== 6) {
+          showOtpStatus('Please enter a valid 6-digit code', 'error');
+          return;
+        }
+
+        const verifyBtn = document.getElementById('verify-otp-btn');
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = 'Verifying...';
+
+        try {
+          const response = await fetch(`/api/donations/${donationId}/verify-otp`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ otp_code: otpCode })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showOtpStatus('✓ OTP verified! Delivery completed.', 'success');
+            setTimeout(() => {
+              closeOtpModal();
+              currentDonation.status = 'completed';
+              renderDonationDetails();
+              alert('Delivery marked as completed! +50 volunteer points awarded.');
+            }, 1500);
+          } else {
+            showOtpStatus(data.message || 'Invalid OTP', 'error');
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = 'Verify OTP';
+          }
+        } catch (error) {
+          console.error('Error verifying OTP:', error);
+          showOtpStatus('Network error. Please try again.', 'error');
+          verifyBtn.disabled = false;
+          verifyBtn.textContent = 'Verify OTP';
+        }
+      }
+
+      async function resendOtp() {
+        const resendBtn = document.getElementById('resend-btn');
+        resendBtn.disabled = true;
+        resendBtn.textContent = 'Sending...';
+
+        try {
+          const response = await fetch(`/api/donations/${donationId}/generate-otp`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            document.getElementById('otp-input').disabled = false;
+            document.getElementById('otp-input').value = '';
+            document.getElementById('verify-otp-btn').disabled = false;
+            document.getElementById('otp-timer').classList.remove('expired');
+            resendBtn.style.display = 'none';
+            showOtpStatus('✓ New OTP sent to receiver', 'success');
+            startOtpTimer();
+          } else {
+            showOtpStatus(data.message || 'Failed to resend OTP', 'error');
+            resendBtn.disabled = false;
+            resendBtn.textContent = 'Resend OTP';
+          }
+        } catch (error) {
+          console.error('Error resending OTP:', error);
+          showOtpStatus('Network error. Please try again.', 'error');
+          resendBtn.disabled = false;
+          resendBtn.textContent = 'Resend OTP';
+        }
+      }
+
+      async function completeDelivery() {
+        // completed deliveries should never hit this path
+        if (currentDonation && currentDonation.status === 'completed') {
+          alert('This delivery has already been completed.');
+          return;
+        }
+
+        // we only issue OTPs for assignments that are actively in transit and have
+        // a recipient address.  without an address there's nothing to verify.
+        const hasAddress = currentDonation.recipient_location || currentDonation.receiver_location;
+        if (!hasAddress) {
+          alert('Cannot complete delivery: no receiver address available.');
+          return;
+        }
+
+        if (currentDonation.status !== 'in-transit') {
+          alert('Delivery must be in transit before you can complete it.');
+          return;
+        }
+
+        if (!confirm('Generate OTP to verify delivery completion?')) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/donations/${donationId}/generate-otp`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            openOtpModal();
+          } else {
+            alert('Failed to generate OTP: ' + data.message);
+          }
+        } catch (error) {
+          console.error('Error generating OTP:', error);
+          alert('Error generating OTP. Please try again.');
+        }
+      }
+    </script>
+  </body>
+</html>
