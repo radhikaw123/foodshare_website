@@ -106,8 +106,8 @@ function generateSessionToken() {
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'raware371322@kkwagh.edu.in',
-    pass: 'krdm dfez sytq sgpa'
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 // Helper function to set session cookie
