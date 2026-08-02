@@ -74,6 +74,26 @@ const { pool } = require('./auth'); // Ensure auth.js is updated as per previous
     } catch (e) {
       console.log('Login history table migration note:', e.message);
     }
+
+    // ensure delivery_otp table exists for OTP-based delivery confirmation
+    try {
+      await pool.execute(`CREATE TABLE IF NOT EXISTS delivery_otp (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        donation_id INT NOT NULL,
+        receiver_id INT NOT NULL,
+        otp_code VARCHAR(6) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP NULL,
+        is_used BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (donation_id) REFERENCES donations(id) ON DELETE CASCADE,
+        FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_delivery_otp_donation (donation_id),
+        INDEX idx_delivery_otp_status (is_used)
+      ) ENGINE=InnoDB`);
+      console.log('Migration: delivery_otp table ensured');
+    } catch (e) {
+      console.log('Delivery OTP table migration note:', e.message);
+    }
   } catch (err) {
     console.error('Error checking/adding rating columns:', err.message);
   }
@@ -104,17 +124,26 @@ function generateSessionToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: Number(process.env.EMAIL_PORT || 465),
+  secure: process.env.EMAIL_SECURE !== 'false',
+  auth: process.env.EMAIL_USER && process.env.EMAIL_PASS ? {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  },
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000
+  } : undefined
 });
+
+if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  transporter.verify((error) => {
+    if (error) {
+      console.log('SMTP Error:', error.message || error);
+    } else {
+      console.log('SMTP Ready');
+    }
+  });
+} else {
+  console.log('SMTP not configured. OTP emails will be logged instead of being sent.');
+}
 // Helper function to set session cookie
 function setSessionCookie(res, token) {
   const expires = new Date();
@@ -1103,31 +1132,39 @@ app.post('/api/donations/:id/generate-otp', async (req, res) => {
       [donationId, donationData.recipient_id, otp, expiresAt]
     );
 
-    // TODO: Send OTP via email/SMS (for now, log it)
-    await transporter.sendMail({
-      from: `"FoodShare Delivery" <${process.env.EMAIL_USER}>`,
-      to: donationData.receiver_email,
-      subject: 'FoodShare Delivery OTP Verification',
-      html: `
-    <h2>FoodShare Delivery Verification</h2>
-    <p>Hello ${donationData.receiver_name},</p>
-    <p>Your OTP for delivery confirmation is:</p>
-    <h1 style="letter-spacing:3px;">${otp}</h1>
-    <p>This OTP will expire in 10 minutes.</p>
-    <p>Please share this code with the volunteer after receiving the food.</p>
-  `
-    });
+    let emailSent = false;
 
-    transporter.verify(function (error, success) {
-    if (error) {
-        console.log("SMTP Error:", error);
+    if (donationData.receiver_email && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      try {
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM || `"FoodShare Delivery" <${process.env.EMAIL_USER}>`,
+          to: donationData.receiver_email,
+          subject: 'FoodShare Delivery OTP Verification',
+          html: `
+            <h2>FoodShare Delivery Verification</h2>
+            <p>Hello ${donationData.receiver_name || 'there'},</p>
+            <p>Your OTP for delivery confirmation is:</p>
+            <h1 style="letter-spacing:3px;">${otp}</h1>
+            <p>This OTP will expire in 10 minutes.</p>
+            <p>Please share this code with the volunteer after receiving the food.</p>
+          `
+        });
+        emailSent = true;
+      } catch (mailError) {
+        console.error('OTP email sending failed:', mailError.message || mailError);
+      }
+    } else if (donationData.receiver_email) {
+      console.log(`OTP email not configured. OTP for donation ${donationId}: ${otp}`);
     } else {
-        console.log("SMTP Server is ready.");
+      console.log(`No receiver email found for donation ${donationId}. OTP was generated but not emailed.`);
     }
-});
 
     // respond success to caller
-    res.json({ success: true, message: 'OTP generated and sent to receiver' });
+    res.json({
+      success: true,
+      message: emailSent ? 'OTP generated and sent to receiver' : 'OTP generated and stored for delivery verification',
+      emailSent
+    });
 
   } catch (error) {
     console.error('Generate OTP error:', error);
