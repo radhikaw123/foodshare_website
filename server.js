@@ -104,11 +104,16 @@ function generateSessionToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  }
+  },
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000
 });
 // Helper function to set session cookie
 function setSessionCookie(res, token) {
@@ -1100,7 +1105,7 @@ app.post('/api/donations/:id/generate-otp', async (req, res) => {
 
     // TODO: Send OTP via email/SMS (for now, log it)
     await transporter.sendMail({
-      from: '"FoodShare Delivery" <${process.env.EMAIL_USER}>',
+      from: `"FoodShare Delivery" <${process.env.EMAIL_USER}>`,
       to: donationData.receiver_email,
       subject: 'FoodShare Delivery OTP Verification',
       html: `
@@ -1112,6 +1117,14 @@ app.post('/api/donations/:id/generate-otp', async (req, res) => {
     <p>Please share this code with the volunteer after receiving the food.</p>
   `
     });
+
+    transporter.verify(function (error, success) {
+    if (error) {
+        console.log("SMTP Error:", error);
+    } else {
+        console.log("SMTP Server is ready.");
+    }
+});
 
     // respond success to caller
     res.json({ success: true, message: 'OTP generated and sent to receiver' });
