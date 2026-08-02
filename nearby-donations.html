@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#10b981">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nearby Donations - FoodShare</title>
@@ -23,6 +32,9 @@
       .btn.primary { background:#10b981; color:white; }
       .hidden { display:none; }
       textarea#recipient-address { width:100%; min-height:80px; padding:10px; border-radius:8px; border:1px solid #e5e7eb; resize:vertical; }
+      .request-charge-note { margin: 10px 0; padding: 10px 12px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; color: #9a3412; font-size: 13px; font-weight: 600; }
+      .charge-badge { display: inline-block; padding: 4px 10px; background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; border-radius: 999px; font-size: 12px; font-weight: 600; }
+      .charge-row { margin-top: 4px; }
     </style>
   </head>
   <body>
@@ -44,6 +56,7 @@
           <div class="modal-header">Provide your pickup address</div>
           <div class="modal-body">
             <p>Please enter the address where you would like the donation delivered or picked up. This will be shared with the donor and volunteers.</p>
+            <p id="request-charge-note" class="request-charge-note" style="display:none;"></p>
             <textarea id="recipient-address" placeholder="Enter your address (street, city, any instructions)"></textarea>
           </div>
           <div class="modal-footer">
@@ -68,6 +81,7 @@
       </div>
     </div>
 
+    <script src="donation-utils.js"></script>
     <script>
       let allDonations = []; // Store data globally for searching
 
@@ -159,6 +173,7 @@
                             <div class="detail-row">
                                 <span>📍 ${item.pickup_location}</span>
                             </div>
+                            ${chargeDetailHtml(item.requested_charge)}
                             <div class="detail-row meta">
                                 <span>By: ${item.donor_name || 'Donor'}</span>
                                 <span>${date}</span>
@@ -178,11 +193,20 @@
         let pendingRequestId = null;
 
         function requestItem(id) {
-          // Open modal to collect recipient address
           pendingRequestId = id;
+          const donation = allDonations.find(d => d.id === id);
+          const chargeNote = document.getElementById('request-charge-note');
+          const formatted = donation ? formatRequestedCharge(donation.requested_charge) : null;
+          if (formatted) {
+            chargeNote.textContent = `This donor has requested a charge of ${formatted} for pickup/delivery costs.`;
+            chargeNote.style.display = 'block';
+          } else {
+            chargeNote.textContent = '';
+            chargeNote.style.display = 'none';
+          }
           document.getElementById('recipient-address').value = '';
           document.getElementById('request-modal-backdrop').classList.remove('hidden');
-        document.getElementById('recipient-address').focus();
+          document.getElementById('recipient-address').focus();
         }
 
         function closeRequestModal() {
@@ -225,5 +249,6 @@
           }
         }
     </script>
+    <script src="pwa.js"></script>
   </body>
 </html>

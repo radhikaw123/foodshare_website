@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#10b981">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Delivery Task - FoodShare</title>
@@ -100,6 +109,16 @@
         <p id="donation-description">Loading...</p>
       </div>
 
+      <!-- Donor Charge Section -->
+      <div class="charge-section" id="charge-section" style="display: none;">
+        <div class="charge-header">
+          <span class="charge-icon">💰</span>
+          <h3>Delivery Charges</h3>
+        </div>
+        <p class="charge-amount" id="charge-amount">₹0</p>
+        <p class="charge-note">This includes donor request and any volunteer fee needed for pickup and delivery.</p>
+      </div>
+
       <!-- Delivery Reward Section -->
       <div class="reward-section">
         <div class="reward-content">
@@ -184,6 +203,7 @@
       </div>
     </div>
 
+    <script src="donation-utils.js"></script>
     <script>
       let currentDonation = null;
       let donationId = null;
@@ -286,7 +306,7 @@
           document.getElementById('receiver-info').textContent = 'Receiver: Not yet assigned';
         }
 
-        // Instructions
+        // Description
         if (d.description) {
           const instructions = d.description.split('\n').filter(line => line.trim());
           const list = document.getElementById('instructions-list');
@@ -307,6 +327,20 @@
           const descSection = document.getElementById('description-section');
           descSection.style.display = 'block';
           document.getElementById('donation-description').textContent = d.description;
+        }
+
+        const formattedCharge = formatRequestedCharge(d.requested_charge);
+        const volunteerFee = formatRequestedCharge(d.volunteer_charge);
+        const chargeSection = document.getElementById('charge-section');
+        const chargeAmount = document.getElementById('charge-amount');
+
+        if (formattedCharge || volunteerFee) {
+          chargeSection.style.display = 'block';
+          const chargeLabel = formattedCharge ? `Donor requested: ${formattedCharge}` : '';
+          const volunteerLabel = volunteerFee ? `Volunteer fee: ${volunteerFee}` : '';
+          chargeAmount.innerHTML = [chargeLabel, volunteerLabel].filter(Boolean).join('<br>');
+        } else {
+          chargeSection.style.display = 'none';
         }
 
         // Reward Points
@@ -567,5 +601,6 @@
         }
       }
     </script>
+    <script src="pwa.js"></script>
   </body>
 </html>

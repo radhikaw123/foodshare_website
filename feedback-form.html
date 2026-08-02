@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#10b981">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Send Feedback - FoodShare</title>
+    <link rel="stylesheet" href="feedback-form.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <a href="help-support.html" class="back-btn">←</a>
+        <h1>Send Feedback</h1>
+        <div style="width: 40px;"></div>
+      </header>
+
+      <!-- Feedback Form Card -->
+      <div class="feedback-card">
+        <p class="form-intro">Help us improve FoodShare! Your feedback is valuable and helps us serve you better.</p>
+
+        <form id="feedbackForm" class="feedback-form">
+          <!-- Role Selection -->
+          <div class="form-group">
+            <label class="form-label">Your Role *</label>
+            <div class="role-options">
+              <label class="role-radio">
+                <input type="radio" name="role" value="donor" required />
+                <span class="role-content">
+                  <span class="role-icon">🍽️</span>
+                  <span class="role-text">
+                    <span class="role-name">Donor</span>
+                    <span class="role-desc">I share food</span>
+                  </span>
+                </span>
+              </label>
+
+              <label class="role-radio">
+                <input type="radio" name="role" value="recipient" required />
+                <span class="role-content">
+                  <span class="role-icon">👥</span>
+                  <span class="role-text">
+                    <span class="role-name">Recipient</span>
+                    <span class="role-desc">I receive food</span>
+                  </span>
+                </span>
+              </label>
+
+              <label class="role-radio">
+                <input type="radio" name="role" value="volunteer" required />
+                <span class="role-content">
+                  <span class="role-icon">🤝</span>
+                  <span class="role-text">
+                    <span class="role-name">Volunteer</span>
+                    <span class="role-desc">I help the community</span>
+                  </span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Feedback Type -->
+          <div class="form-group">
+            <label class="form-label">Feedback Type *</label>
+            <select name="type" class="form-select" required>
+              <option value="">Select feedback type...</option>
+              <option value="bug">Bug Report</option>
+              <option value="feature">Feature Request</option>
+              <option value="improvement">Improvement Suggestion</option>
+              <option value="complaint">Complaint</option>
+              <option value="compliment">Compliment</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <!-- Subject -->
+          <div class="form-group">
+            <label class="form-label">Subject *</label>
+            <input 
+              type="text" 
+              name="subject" 
+              class="form-input" 
+              placeholder="Brief subject of your feedback"
+              required
+            />
+          </div>
+
+          <!-- Message -->
+          <div class="form-group">
+            <label class="form-label">Your Feedback *</label>
+            <textarea 
+              name="message" 
+              class="form-textarea" 
+              placeholder="Please provide detailed feedback. The more specific you are, the better we can help."
+              rows="6"
+              required
+            ></textarea>
+            <span class="char-count"><span id="charCount">0</span>/500</span>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label class="form-label">Email Address (Optional)</label>
+            <input 
+              type="email" 
+              name="email" 
+              class="form-input" 
+              placeholder="your@email.com"
+            />
+            <p class="form-hint">We'll use this to follow up if needed</p>
+          </div>
+
+          <!-- Attachment -->
+          <div class="form-group">
+            <label class="form-label">Add Screenshot (Optional)</label>
+            <div class="file-upload">
+              <input 
+                type="file" 
+                name="attachment" 
+                class="file-input" 
+                accept="image/*"
+                id="fileInput"
+              />
+              <label for="fileInput" class="file-label">
+                <span class="upload-icon">📎</span>
+                <span>Click to upload or drag & drop</span>
+                <span class="file-hint">PNG, JPG up to 5MB</span>
+              </label>
+              <div id="fileName" class="file-name"></div>
+            </div>
+          </div>
+
+          <!-- Subscribe to Updates -->
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="subscribe" />
+              <span>Notify me when this issue is resolved</span>
+            </label>
+          </div>
+
+          <!-- Buttons -->
+          <div class="form-buttons">
+            <button type="reset" class="btn btn-secondary">Clear</button>
+            <button type="submit" class="btn btn-primary">Send Feedback</button>
+          </div>
+        </form>
+
+        <!-- Success Message -->
+        <div id="successMessage" class="success-message" style="display: none;">
+          <div class="success-content">
+            <span class="success-icon">✓</span>
+            <h3>Thank you for your feedback!</h3>
+            <p>We appreciate your input. Your feedback helps us improve FoodShare.</p>
+            <a href="help-support.html" class="btn btn-primary">Back to Help</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ Section -->
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Will my feedback be read?</span>
+              <span class="faq-toggle">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>Yes! Every piece of feedback is reviewed by our team. We use your input to improve FoodShare and make it better for everyone.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>How long does it take to respond?</span>
+              <span class="faq-toggle">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>We typically review feedback within 48 hours. If you provide your email, we'll send you updates about your feedback status.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Can I track my feedback?</span>
+              <span class="faq-toggle">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>If you provide your email and check "Notify me", we'll send you updates about your feedback. For bug reports, we'll let you know when it's fixed.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Is my feedback anonymous?</span>
+              <span class="faq-toggle">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>Your email is optional. You can submit feedback anonymously, but providing it helps us follow up with you about your suggestions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Character count for textarea
+      const messageInput = document.querySelector('textarea[name="message"]');
+      const charCount = document.getElementById('charCount');
+      
+      messageInput.addEventListener('input', () => {
+        charCount.textContent = messageInput.value.length;
+        if (messageInput.value.length > 500) {
+          messageInput.value = messageInput.value.substring(0, 500);
+          charCount.textContent = 500;
+        }
+      });
+
+      // File upload
+      const fileInput = document.getElementById('fileInput');
+      const fileNameDiv = document.getElementById('fileName');
+      
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          const fileName = e.target.files[0].name;
+          fileNameDiv.textContent = '✓ ' + fileName + ' uploaded';
+          fileNameDiv.style.color = '#10b981';
+        } else {
+          fileNameDiv.textContent = '';
+        }
+      });
+
+      // Form submission
+      const feedbackForm = document.getElementById('feedbackForm');
+      const successMessage = document.getElementById('successMessage');
+
+      feedbackForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        // Get form data
+        const formData = new FormData(feedbackForm);
+        const data = {
+          role: formData.get('role'),
+          type: formData.get('type'),
+          subject: formData.get('subject'),
+          message: formData.get('message'),
+          email: formData.get('email'),
+          subscribe: formData.get('subscribe') === 'on',
+          timestamp: new Date().toISOString()
+        };
+
+        // Save to localStorage (in real app, send to server)
+        const feedbackList = JSON.parse(localStorage.getItem('feedbackList') || '[]');
+        feedbackList.push(data);
+        localStorage.setItem('feedbackList', JSON.stringify(feedbackList));
+
+        // Show success message
+        feedbackForm.style.display = 'none';
+        successMessage.style.display = 'block';
+        window.scrollTo(0, 0);
+      });
+
+      // FAQ Toggle
+      const faqQuestions = document.querySelectorAll('.faq-question');
+      faqQuestions.forEach(question => {
+        question.addEventListener('click', () => {
+          const faqItem = question.closest('.faq-item');
+          const isOpen = faqItem.classList.contains('active');
+          
+          document.querySelectorAll('.faq-item.active').forEach(item => {
+            if (item !== faqItem) {
+              item.classList.remove('active');
+            }
+          });
+          
+          faqItem.classList.toggle('active');
+        });
+      });
+    </script>
+    <script src="pwa.js"></script>
+  </body>
+</html>

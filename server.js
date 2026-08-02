@@ -37,12 +37,51 @@ const { pool } = require('./auth'); // Ensure auth.js is updated as per previous
       await pool.execute('ALTER TABLE users ADD COLUMN rating_count INT DEFAULT 0');
       console.log('Migration: added rating_sum and rating_count to users');
     }
+
+    // ensure donations have optional requested_charge and volunteer_charge columns
+    const [chargeCols] = await pool.execute("SHOW COLUMNS FROM donations LIKE 'requested_charge'");
+    if (chargeCols.length === 0) {
+      await pool.execute('ALTER TABLE donations ADD COLUMN requested_charge DECIMAL(10,2) NULL DEFAULT NULL');
+      console.log('Migration: added requested_charge to donations');
+    }
+    const [volunteerChargeCols] = await pool.execute("SHOW COLUMNS FROM donations LIKE 'volunteer_charge'");
+    if (volunteerChargeCols.length === 0) {
+      await pool.execute('ALTER TABLE donations ADD COLUMN volunteer_charge DECIMAL(10,2) NULL DEFAULT NULL');
+      console.log('Migration: added volunteer_charge to donations');
+    }
+
+    // ensure users have two-factor authentication columns
+    const [twoFaCols] = await pool.execute("SHOW COLUMNS FROM users LIKE 'two_factor_secret'");
+    if (twoFaCols.length === 0) {
+      await pool.execute('ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(255) NULL');
+      await pool.execute('ALTER TABLE users ADD COLUMN two_factor_enabled BOOLEAN DEFAULT FALSE');
+      console.log('Migration: added two_factor columns to users');
+    }
+
+    // ensure login_history table exists
+    try {
+      await pool.execute(`CREATE TABLE IF NOT EXISTS login_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        ip_address VARCHAR(45),
+        user_agent VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_login_user (user_id),
+        INDEX idx_login_date (created_at)
+      )`);
+      console.log('Migration: login_history table ensured');
+    } catch (e) {
+      console.log('Login history table migration note:', e.message);
+    }
   } catch (err) {
     console.error('Error checking/adding rating columns:', err.message);
   }
 })();
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const speakeasy = require('speakeasy');
+const QRCode = require('qrcode');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -113,6 +152,19 @@ app.post('/api/login', async (req, res) => {
     );
 
     setSessionCookie(res, sessionToken);
+
+    // Track login in login_history
+    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '';
+    const userAgent = req.headers['user-agent'] || '';
+    try {
+      await pool.execute(
+        'INSERT INTO login_history (user_id, ip_address, user_agent) VALUES (?, ?, ?)',
+        [user.id, ipAddress, userAgent]
+      );
+    } catch (err) {
+      console.error('Error recording login history:', err.message);
+      // Continue even if login history fails
+    }
 
     // Return user info (including profile_image if it exists)
     res.json({
@@ -297,14 +349,23 @@ app.post('/api/donations', async (req, res) => {
       return res.status(401).json({ success: false, message: 'You must be logged in' });
     }
 
-    const { title, description, food_type, quantity, pickup_location, best_before_date, image_data } = req.body;
+    const { title, description, food_type, quantity, pickup_location, best_before_date, image_data, requested_charge } = req.body;
+
+    let charge = null;
+    if (requested_charge !== undefined && requested_charge !== null && requested_charge !== '') {
+      charge = parseFloat(requested_charge);
+      if (Number.isNaN(charge) || charge < 0) {
+        return res.status(400).json({ success: false, message: 'Charge must be a valid amount of 0 or more' });
+      }
+      if (charge === 0) charge = null;
+    }
 
     // Insert into DB
     const [result] = await pool.execute(
       `INSERT INTO donations 
-      (user_id, title, description, food_type, quantity, pickup_location, best_before_date, image_data, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'available')`,
-      [user.id, title, description, food_type, quantity, pickup_location, best_before_date, image_data]
+      (user_id, title, description, food_type, quantity, pickup_location, best_before_date, image_data, requested_charge, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'available')`,
+      [user.id, title, description, food_type, quantity, pickup_location, best_before_date, image_data, charge]
     );
 
     res.json({ success: true, message: 'Donation created', donationId: result.insertId });
@@ -319,7 +380,7 @@ app.post('/api/donations', async (req, res) => {
 app.get('/api/donations', async (req, res) => {
   try {
     const [rows] = await pool.execute(
-            `SELECT d.*, u.full_name as donor_name, u.location as donor_location,
+      `SELECT d.*, u.full_name as donor_name, u.location as donor_location,
               r.full_name as receiver_name, COALESCE(d.recipient_location, r.location) as receiver_location
              FROM donations d 
              JOIN users u ON d.user_id = u.id 
@@ -402,7 +463,7 @@ app.get('/api/donations/all', async (req, res) => {
 
     // ensure donation table has volunteer_id column (should be added via migration)
     const [rows] = await pool.execute(
-            `SELECT d.*, u.full_name as donor_name, u.location as donor_location,
+      `SELECT d.*, u.full_name as donor_name, u.location as donor_location,
               r.full_name as receiver_name, COALESCE(d.recipient_location, r.location) as receiver_location,
               v.full_name as volunteer_name
              FROM donations d 
@@ -462,7 +523,7 @@ app.get('/api/donations/:id', async (req, res) => {
     const donationId = req.params.id;
 
     const [rows] = await pool.execute(
-            `SELECT d.*, u.full_name as donor_name, u.location as donor_location, u.mobile_number as donor_phone,
+      `SELECT d.*, u.full_name as donor_name, u.location as donor_location, u.mobile_number as donor_phone,
               r.full_name as receiver_name, COALESCE(d.recipient_location, r.location) as receiver_location,
               v.full_name as volunteer_name
              FROM donations d 
@@ -542,7 +603,17 @@ app.put('/api/donations/:id/accept', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Only requested donations can be accepted' });
     }
 
-    await pool.execute('UPDATE donations SET volunteer_id = ?, status = ? WHERE id = ?', [user.id, 'in-transit', donationId]);
+    const { volunteer_charge } = req.body || {};
+    if (volunteer_charge === undefined || volunteer_charge === null || volunteer_charge === '') {
+      return res.status(400).json({ success: false, message: 'Volunteer fee is required and must be a number 0 or higher' });
+    }
+
+    const volunteerCharge = parseFloat(volunteer_charge);
+    if (Number.isNaN(volunteerCharge) || volunteerCharge < 0) {
+      return res.status(400).json({ success: false, message: 'Volunteer fee must be a valid amount of 0 or more' });
+    }
+
+    await pool.execute('UPDATE donations SET volunteer_id = ?, status = ?, volunteer_charge = ? WHERE id = ?', [user.id, 'in-transit', volunteerCharge, donationId]);
     res.json({ success: true, message: 'Donation accepted' });
   } catch (error) {
     console.error('Accept donation error:', error);
@@ -606,10 +677,10 @@ app.put('/api/donations/:id/request', async (req, res) => {
     // 2. Check if donation exists and is currently available
     const [check] = await pool.execute('SELECT status FROM donations WHERE id = ?', [donationId]);
     if (check.length === 0) {
-        return res.status(404).json({success: false, message: 'Donation not found'});
+      return res.status(404).json({ success: false, message: 'Donation not found' });
     }
     if (check[0].status !== 'available') {
-        return res.status(400).json({success: false, message: 'This donation is no longer available'});
+      return res.status(400).json({ success: false, message: 'This donation is no longer available' });
     }
 
     // 3. Expect recipient_location in the body and update the donation
@@ -637,7 +708,7 @@ async function deleteExpiredDonations() {
   try {
     // Get current time minus 24 hours
     const expiryTime = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    
+
     // Delete donations that are:
     // 1. In 'available' status (not requested by anyone)
     // 2. Created more than 24 hours ago
@@ -648,7 +719,7 @@ async function deleteExpiredDonations() {
        AND recipient_id IS NULL`,
       [expiryTime]
     );
-    
+
     if (result.affectedRows > 0) {
       console.log(`[Auto-cleanup] Deleted ${result.affectedRows} expired donation(s)`);
     }
@@ -663,9 +734,310 @@ setInterval(deleteExpiredDonations, 60 * 60 * 1000);
 // Also run cleanup once on server startup
 deleteExpiredDonations();
 
+// GET /api/login-history - Get user's login history
+app.get('/api/login-history', async (req, res) => {
+  try {
+    const { verifySession } = require('./auth');
+    const token = req.cookies?.session_token || req.headers?.authorization?.replace('Bearer ', '');
+    const user = await verifySession(token);
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    // Fetch last 50 login records for this user, ordered by most recent first
+    const [history] = await pool.execute(
+      'SELECT id, user_id, ip_address, user_agent, created_at FROM login_history WHERE user_id = ? ORDER BY created_at DESC LIMIT 50',
+      [user.id]
+    );
+
+    res.json({ success: true, history });
+  } catch (error) {
+    console.error('Get login history error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch login history' });
+  }
+});
+
+// GET /api/notifications - Get notifications for current user based on role
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const { verifySession } = require('./auth');
+    const token = req.cookies?.session_token || req.headers?.authorization?.replace('Bearer ', '');
+    const user = await verifySession(token);
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    let notifications = [];
+
+    if (user.role === 'donor') {
+      // Donor: Show notifications about their donations being requested or completed
+      const [donorNotifs] = await pool.execute(
+        `SELECT d.id, d.title, d.created_at, 
+                d.status, d.recipient_id, u.full_name as recipient_name
+         FROM donations d
+         LEFT JOIN users u ON d.recipient_id = u.id
+         WHERE d.user_id = ? 
+         ORDER BY d.created_at DESC
+         LIMIT 20`,
+        [user.id]
+      );
+
+      notifications = donorNotifs.map(d => ({
+        type: d.status === 'completed' ? 'success' : d.recipient_id ? 'warning' : 'info',
+        title: '📦 Donation Update',
+        message: d.status === 'completed'
+          ? `Your donation "${d.title}" has been completed!`
+          : d.recipient_id
+            ? `Someone requested your "${d.title}" donation`
+            : `Your donation "${d.title}" is available`,
+        created_at: d.created_at,
+        donation_id: d.id
+      }));
+
+    } else if (user.role === 'recipient') {
+      // Recipient: Show notifications about volunteers reaching them or new donations available
+      const [recipientNotifs] = await pool.execute(
+        `SELECT d.id, d.title, d.created_at, 
+                d.status, d.volunteer_id, u.full_name as volunteer_name
+         FROM donations d
+         LEFT JOIN users u ON d.volunteer_id = u.id
+         WHERE d.recipient_id = ? 
+         ORDER BY d.created_at DESC
+         LIMIT 20`,
+        [user.id]
+      );
+
+      notifications = recipientNotifs.map(d => ({
+        type: d.status === 'completed' ? 'success' : d.status === 'in-transit' ? 'danger' : 'info',
+        title: d.status === 'in-transit' ? '🚚 On The Way' : d.status === 'completed' ? '✓ Delivered' : '📦 Food Found',
+        message: d.status === 'in-transit'
+          ? `A volunteer is on the way with "${d.title}"`
+          : d.status === 'completed'
+            ? `Your request for "${d.title}" has been completed`
+            : `A donation "${d.title}" is available near you`,
+        created_at: d.created_at,
+        donation_id: d.id
+      }));
+
+    } else if (user.role === 'volunteer') {
+      // Volunteer: Show notifications about available donations they can accept
+      const [volunteerNotifs] = await pool.execute(
+        `SELECT d.id, d.title, d.created_at, 
+                d.status, d.recipient_id, u.full_name as donor_name
+         FROM donations d
+         LEFT JOIN users u ON d.user_id = u.id
+         WHERE d.status IN ('requested', 'in-transit') 
+         AND (d.volunteer_id = ? OR d.volunteer_id IS NULL)
+         ORDER BY d.created_at DESC
+         LIMIT 20`,
+        [user.id]
+      );
+
+      notifications = volunteerNotifs.map(d => ({
+        type: d.status === 'in-transit' ? 'warning' : 'info',
+        title: d.status === 'in-transit' ? '🚚 Active Delivery' : '🤝 Help Needed',
+        message: d.status === 'in-transit'
+          ? `You are delivering "${d.title}" to a recipient`
+          : `Someone is waiting for "${d.title}" - volunteer to deliver it`,
+        created_at: d.created_at,
+        donation_id: d.id
+      }));
+    }
+
+    // Return only unique notifications (last 10) sorted by date
+    const uniqueNotifs = Array.from(new Map(notifications.map(n => [n.donation_id, n])).values())
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 10);
+
+    res.json({ success: true, notifications: uniqueNotifs });
+  } catch (error) {
+    console.error('Get notifications error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch notifications' });
+  }
+});
+
+// --- TWO-FACTOR AUTHENTICATION ROUTES ---
+
+// GET /api/2fa/status
+app.get('/api/2fa/status', async (req, res) => {
+  try {
+    const { verifySession } = require('./auth');
+    const token = req.cookies?.session_token || req.headers?.authorization?.replace('Bearer ', '');
+    const user = await verifySession(token);
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const [[row]] = await pool.execute(
+      'SELECT two_factor_enabled FROM users WHERE id = ?',
+      [user.id]
+    );
+
+    res.json({ success: true, enabled: !!row?.two_factor_enabled });
+  } catch (error) {
+    console.error('2FA status error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch 2FA status' });
+  }
+});
+
+// POST /api/2fa/setup - Generate secret and QR code
+app.post('/api/2fa/setup', async (req, res) => {
+  try {
+    const { verifySession } = require('./auth');
+    const token = req.cookies?.session_token || req.headers?.authorization?.replace('Bearer ', '');
+    const user = await verifySession(token);
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const [[row]] = await pool.execute(
+      'SELECT two_factor_enabled FROM users WHERE id = ?',
+      [user.id]
+    );
+
+    if (row?.two_factor_enabled) {
+      return res.status(400).json({ success: false, message: 'Two-factor authentication is already enabled' });
+    }
+
+    const secret = speakeasy.generateSecret({
+      name: `FoodShare (${user.email})`,
+      length: 20
+    });
+
+    const qrCodeDataUrl = await QRCode.toDataURL(secret.otpauth_url);
+
+    await pool.execute(
+      'UPDATE users SET two_factor_secret = ?, two_factor_enabled = FALSE WHERE id = ?',
+      [secret.base32, user.id]
+    );
+
+    res.json({
+      success: true,
+      qrCode: qrCodeDataUrl,
+      secret: secret.base32
+    });
+  } catch (error) {
+    console.error('2FA setup error:', error);
+    res.status(500).json({ success: false, message: 'Failed to set up two-factor authentication' });
+  }
+});
+
+// POST /api/2fa/verify - Verify code and enable 2FA
+app.post('/api/2fa/verify', async (req, res) => {
+  try {
+    const { verifySession } = require('./auth');
+    const token = req.cookies?.session_token || req.headers?.authorization?.replace('Bearer ', '');
+    const user = await verifySession(token);
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const { code } = req.body;
+    if (!code || !/^\d{6}$/.test(code)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid 6-digit code' });
+    }
+
+    const [[row]] = await pool.execute(
+      'SELECT two_factor_secret, two_factor_enabled FROM users WHERE id = ?',
+      [user.id]
+    );
+
+    if (!row?.two_factor_secret) {
+      return res.status(400).json({ success: false, message: 'Please start the setup process first' });
+    }
+
+    if (row.two_factor_enabled) {
+      return res.status(400).json({ success: false, message: 'Two-factor authentication is already enabled' });
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: row.two_factor_secret,
+      encoding: 'base32',
+      token: code,
+      window: 1
+    });
+
+    if (!verified) {
+      return res.status(401).json({ success: false, message: 'Invalid verification code. Please try again.' });
+    }
+
+    await pool.execute(
+      'UPDATE users SET two_factor_enabled = TRUE WHERE id = ?',
+      [user.id]
+    );
+
+    res.json({ success: true, message: 'Two-factor authentication enabled successfully' });
+  } catch (error) {
+    console.error('2FA verify error:', error);
+    res.status(500).json({ success: false, message: 'Failed to verify code' });
+  }
+});
+
+// POST /api/2fa/disable - Disable 2FA
+app.post('/api/2fa/disable', async (req, res) => {
+  try {
+    const { verifySession } = require('./auth');
+    const token = req.cookies?.session_token || req.headers?.authorization?.replace('Bearer ', '');
+    const user = await verifySession(token);
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const { code } = req.body;
+    if (!code || !/^\d{6}$/.test(code)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid 6-digit code' });
+    }
+
+    const [[row]] = await pool.execute(
+      'SELECT two_factor_secret, two_factor_enabled FROM users WHERE id = ?',
+      [user.id]
+    );
+
+    if (!row?.two_factor_enabled) {
+      return res.status(400).json({ success: false, message: 'Two-factor authentication is not enabled' });
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: row.two_factor_secret,
+      encoding: 'base32',
+      token: code,
+      window: 1
+    });
+
+    if (!verified) {
+      return res.status(401).json({ success: false, message: 'Invalid verification code' });
+    }
+
+    await pool.execute(
+      'UPDATE users SET two_factor_secret = NULL, two_factor_enabled = FALSE WHERE id = ?',
+      [user.id]
+    );
+
+    res.json({ success: true, message: 'Two-factor authentication disabled' });
+  } catch (error) {
+    console.error('2FA disable error:', error);
+    res.status(500).json({ success: false, message: 'Failed to disable two-factor authentication' });
+  }
+});
+
 // Start Server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  const os = require('os');
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        console.log(`  On your iPhone (same Wi-Fi): http://${net.address}:${PORT}`);
+      }
+    }
+  }
   console.log(`[Auto-cleanup] Scheduled donation cleanup job is running (every 60 minutes)`);
 });
 // ...existing code...
@@ -728,10 +1100,10 @@ app.post('/api/donations/:id/generate-otp', async (req, res) => {
 
     // TODO: Send OTP via email/SMS (for now, log it)
     await transporter.sendMail({
-  from: '"FoodShare Delivery" <raware371322@kkwagh.edu.in>',
-  to: donationData.receiver_email,
-  subject: 'FoodShare Delivery OTP Verification',
-  html: `
+      from: '"FoodShare Delivery" <raware371322@kkwagh.edu.in>',
+      to: donationData.receiver_email,
+      subject: 'FoodShare Delivery OTP Verification',
+      html: `
     <h2>FoodShare Delivery Verification</h2>
     <p>Hello ${donationData.receiver_name},</p>
     <p>Your OTP for delivery confirmation is:</p>
@@ -739,7 +1111,7 @@ app.post('/api/donations/:id/generate-otp', async (req, res) => {
     <p>This OTP will expire in 10 minutes.</p>
     <p>Please share this code with the volunteer after receiving the food.</p>
   `
-});
+    });
 
     // respond success to caller
     res.json({ success: true, message: 'OTP generated and sent to receiver' });

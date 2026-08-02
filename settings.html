@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#10b981">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Settings - FoodShare</title>
@@ -34,7 +43,7 @@
               <p>Get notified when food becomes available nearby</p>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" checked />
+              <input type="checkbox" data-preference-key="near_me" checked />
               <span class="slider"></span>
             </label>
           </div>
@@ -44,7 +53,7 @@
               <p>Reminders for scheduled pickups</p>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" checked />
+              <input type="checkbox" data-preference-key="pickup_reminders" checked />
               <span class="slider"></span>
             </label>
           </div>
@@ -54,7 +63,7 @@
               <p>Status updates on your deliveries</p>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" checked />
+              <input type="checkbox" data-preference-key="delivery_updates" checked />
               <span class="slider"></span>
             </label>
           </div>
@@ -64,7 +73,7 @@
               <p>Updates from the FoodShare community</p>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" />
+              <input type="checkbox" data-preference-key="community_news" />
               <span class="slider"></span>
             </label>
           </div>
@@ -80,21 +89,11 @@
         <div class="settings-list">
           <div class="setting-item">
             <div class="setting-info">
-              <h3>Push Notifications</h3>
-              <p>Receive notifications on your device</p>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" checked />
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="setting-item">
-            <div class="setting-info">
               <h3>Email Notifications</h3>
               <p>Receive updates via email</p>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" checked />
+              <input type="checkbox" data-preference-key="email_notifications" checked />
               <span class="slider"></span>
             </label>
           </div>
@@ -104,34 +103,22 @@
               <p>Share location for better recommendations</p>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" checked />
+              <input type="checkbox" data-preference-key="location_sharing" checked />
               <span class="slider"></span>
             </label>
           </div>
         </div>
       </div>
 
-      <!-- Dark Mode Card (Second Image) -->
-      <div class="settings-card">
-        <div class="setting-item">
-          <div class="setting-info">
-            <h3>Dark Mode</h3>
-            <p>Use dark theme (coming soon)</p>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" disabled />
-            <span class="slider"></span>
-          </label>
-        </div>
-      </div>
 
+      
       <!-- General Settings Card (Second Image) -->
       <div class="settings-card">
         <div class="card-header">
           <h2>General</h2>
         </div>
         <div class="settings-list">
-          <div class="setting-item clickable">
+          <a href="privacy.html" class="setting-item clickable" style="text-decoration: none; color: inherit;">
             <div class="setting-info">
               <span class="setting-icon">🛡️</span>
               <div>
@@ -140,8 +127,8 @@
               </div>
             </div>
             <span class="arrow">›</span>
-          </div>
-          <div class="setting-item clickable">
+          </a>
+          <a href="help-support.html" class="setting-item clickable" style="text-decoration: none; color: inherit;">
             <div class="setting-info">
               <span class="setting-icon">❓</span>
               <div>
@@ -150,8 +137,8 @@
               </div>
             </div>
             <span class="arrow">›</span>
-          </div>
-          <div class="setting-item clickable">
+          </a>
+          <a href="about-foodshare.html" class="setting-item clickable" style="text-decoration: none; color: inherit;">
             <div class="setting-info">
               <span class="setting-icon">ℹ️</span>
               <div>
@@ -160,20 +147,63 @@
               </div>
             </div>
             <span class="arrow">›</span>
-          </div>
-          <div class="setting-item clickable">
-            <div class="setting-info">
-              <span class="setting-icon">🌐</span>
-              <div>
-                <h3>Language</h3>
-                <p>English (US)</p>
-              </div>
-            </div>
-            <span class="arrow">›</span>
-          </div>
+          </a>
         </div>
       </div>
     </div>
+
+    <style>
+    </style>
+
+    <script src="notification-preferences.js"></script>
+    <script src="pwa.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const toggles = Array.from(document.querySelectorAll('.settings-card input[type="checkbox"]'));
+
+        const prefs = window.foodshareNotificationPrefs?.get?.() || {};
+        toggles.forEach((toggle) => {
+          const key = toggle.dataset.preferenceKey;
+          if (key && typeof prefs[key] !== 'undefined') {
+            toggle.checked = prefs[key];
+          }
+        });
+
+        toggles.forEach((toggle) => {
+          toggle.addEventListener('change', async () => {
+            const key = toggle.dataset.preferenceKey;
+            if (!key) return;
+
+            const enabled = toggle.checked;
+            window.foodshareNotificationPrefs?.set?.(key, enabled);
+
+            if (key === 'near_me' || key === 'delivery_updates' || key === 'pickup_reminders' || key === 'community_news' || key === 'push_notifications') {
+              const permissionGranted = await window.foodshareNotificationPrefs?.requestPermission?.();
+              if (enabled && key === 'push_notifications' && permissionGranted) {
+                window.foodshareNotificationPrefs?.notify?.('Push notifications enabled', 'You will now receive device alerts for FoodShare activity.', { preferenceKey: 'push_notifications' });
+              } else if (!permissionGranted && enabled && typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+                alert('Notifications are blocked in this browser. Please enable them in site settings.');
+              }
+            }
+
+            if (key === 'email_notifications' && enabled) {
+              window.foodshareNotificationPrefs?.notify?.('Email updates enabled', 'Email updates are now turned on for your activity.', { preferenceKey: 'email_notifications' });
+            }
+
+            if (key === 'location_sharing') {
+              if (enabled) {
+                const locationAllowed = await window.foodshareNotificationPrefs?.requestLocation?.();
+                if (!locationAllowed) {
+                  alert('Location access was not granted. You can enable it later in your browser settings.');
+                }
+              } else {
+                localStorage.removeItem('foodshare_user_location');
+              }
+            }
+          });
+        });
+      });
+    </script>
   </body>
 </html>
 

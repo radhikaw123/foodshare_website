@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#10b981">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Activity Log - FoodShare</title>
+
+    <link rel="stylesheet" href="activity-log.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <a href="privacy.html" class="back-btn">←</a>
+        <h1>Activity Log</h1>
+        <div style="width: 40px;"></div>
+      </header>
+
+      <!-- Tabs for different activity types -->
+      <div class="tabs-container">
+        <button class="tab-btn active" data-tab="all">All Activity</button>
+        <button class="tab-btn" data-tab="login">Login History</button>
+        <button class="tab-btn" data-tab="donations">Donations</button>
+        <button class="tab-btn" data-tab="requests">Requests</button>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loading-state" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading activity log...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="empty-state" style="display: none;">
+        <div class="empty-icon">📋</div>
+        <h2>No Activity Yet</h2>
+        <p id="empty-message">Your activity log is empty. Start participating to see your activity here.</p>
+      </div>
+
+      <!-- Activity Timeline -->
+      <div id="activity-container" class="activity-container" style="display: none;">
+        <div class="timeline">
+          <!-- Activity items will be inserted here -->
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div id="error-state" class="error-state" style="display: none;">
+        <div class="error-icon">⚠️</div>
+        <h2>Error Loading Activity</h2>
+        <p id="error-message">Something went wrong. Please try again later.</p>
+        <button onclick="location.reload()" class="retry-btn">Retry</button>
+      </div>
+    </div>
+
+    <script src="activity-log.js"></script>
+    <script src="pwa.js"></script>
+  </body>
+</html>

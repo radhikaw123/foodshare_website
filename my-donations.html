@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#10b981">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Activity - FoodShare</title>
@@ -74,6 +83,7 @@
       </div>
     </div>
 
+    <script src="donation-utils.js"></script>
     <script>
       let currentUserRole = 'donor';
 
@@ -197,6 +207,8 @@
                         <span class="detail-icon">📍</span>
                         <span>${item.pickup_location}</span>
                       </div>
+                      ${formatRequestedCharge(item.requested_charge) ? `<div class="detail-item charge-item"><span class="detail-icon">💰</span><span>Donor charge: ${formatRequestedCharge(item.requested_charge)}</span></div>` : ''}
+                      ${formatRequestedCharge(item.volunteer_charge) ? `<div class="detail-item charge-item"><span class="detail-icon">💸</span><span>Volunteer fee: ${formatRequestedCharge(item.volunteer_charge)}</span></div>` : ''}
                     </div>
                     ${subDetail}
                     ${!isActive && currentUserRole === 'recipient' && !item.donor_rating ? '<p style="font-size:12px;color:#059669;font-weight:600;">Tap to rate</p>' : ''}
@@ -340,5 +352,6 @@
         });
       });
     </script>
+    <script src="pwa.js"></script>
   </body>
 </html>

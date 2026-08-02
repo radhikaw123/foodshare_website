@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#10b981">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy & Security - FoodShare</title>
+    <link rel="stylesheet" href="privacy.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <a href="settings.html" class="back-btn">←</a>
+        <h1>Privacy</h1>
+        <div style="width: 40px;"></div>
+      </header>
+
+      <!-- Privacy Settings Card -->
+      <div class="privacy-card">
+        <div class="card-header">
+          <span class="header-icon">🛡️</span>
+          <h2>Profile Visibility</h2>
+        </div>
+        <p class="card-description">Control what information is visible to other users on the platform.</p>
+        
+        <div class="settings-list">
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Allow Messages</h3>
+              <p>People are able to send you messages.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Name</h3>
+              <p>Your name is visible to the public.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+      
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Location</h3>
+              <p>Your location is visible to the public.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Bio</h3>
+              <p>Your bio is visible to the public.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          
+        </div>
+      </div>
+
+      <!-- Data & Security Card -->
+      <div class="privacy-card">
+        <div class="card-header">
+          <span class="header-icon">🔐</span>
+          <h2>Data & Security</h2>
+        </div>
+        
+        <div class="settings-list">
+          <a href="two-factor-auth.html" class="setting-item clickable" style="text-decoration: none; color: inherit;">
+            <div class="setting-info">
+              <h3>Two-Factor Authentication</h3>
+              <p>Add an extra layer of security to your account.</p>
+            </div>
+            <span class="arrow">›</span>
+          </a>
+
+          <a href="activity-log.html" class="setting-item clickable" style="text-decoration: none; color: inherit;">
+            <div class="setting-info">
+              <h3>Activity Log</h3>
+              <p>View your account activity and login history.</p>
+            </div>
+            <span class="arrow">›</span>
+          </a>
+
+          
+        </div>
+      </div>
+
+    
+      <!-- Privacy Policy Card -->
+    
+
+        
+        </div>
+      </div>
+    </div>
+    <script src="pwa.js"></script>
+  </body>
+</html>

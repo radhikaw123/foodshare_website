@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#10b981">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FoodShare AI Assistant - Help & Support</title>
+    <link rel="stylesheet" href="ai-chatbot.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="chat-container">
+      <!-- Header -->
+      <div class="chat-header">
+        <a href="help-support.html" class="back-btn">←</a>
+        <div class="header-content">
+          <h1>FoodShare Assistant</h1>
+          <p class="status">Online • Always here to help</p>
+        </div>
+        <div style="width: 40px;"></div>
+      </div>
+
+      <!-- Chat Messages -->
+      <div class="chat-messages" id="chatMessages">
+        <!-- Welcome Message -->
+        <div class="message bot-message">
+          <div class="message-avatar">🤖</div>
+          <div class="message-content">
+            <div class="message-text">
+              👋 Hi there! I'm the FoodShare AI Assistant. I'm here to help you with any questions about donating food, finding donations, or using the FoodShare app. What can I help you with today?
+            </div>
+            <span class="message-time">Just now</span>
+          </div>
+        </div>
+
+        <!-- Quick Reply Suggestions -->
+        <div class="quick-replies" id="quickReplies">
+          <button class="quick-reply-btn" onclick="sendMessage('How do I post a donation?')">Post a Donation</button>
+          <button class="quick-reply-btn" onclick="sendMessage('How do I find nearby food?')">Find Food Nearby</button>
+          <button class="quick-reply-btn" onclick="sendMessage('Account & Security Help')">Account Help</button>
+          <button class="quick-reply-btn" onclick="sendMessage('Report a problem')">Report Issue</button>
+        </div>
+      </div>
+
+      <!-- Chat Input -->
+      <div class="chat-input-area">
+        <div class="input-wrapper">
+          <input 
+            type="text" 
+            id="messageInput" 
+            class="chat-input" 
+            placeholder="Ask me anything..." 
+            autocomplete="off"
+          />
+          <button class="send-btn" onclick="sendMessage()">
+            <span>➤</span>
+          </button>
+        </div>
+        <p class="input-hint">We typically respond within seconds</p>
+      </div>
+    </div>
+
+    <script>
+      // Sample AI responses
+      const responses = {
+        'post': {
+          keywords: ['post', 'donation', 'share', 'donate'],
+          reply: '📍 To post a donation:\n\n1. Go to Dashboard\n2. Tap "New Donation"\n3. Add photos of the food\n4. Describe what you\'re sharing\n5. Set quantity & expiry date\n6. Choose pickup location\n7. Tap "Publish"\n\nTips: Clear photos and detailed descriptions get more responses!'
+        },
+        'find': {
+          keywords: ['find', 'nearby', 'search', 'look for'],
+          reply: '🗺️ To find food near you:\n\n1. Go to "Nearby Donations"\n2. View items on the map\n3. Filter by distance or type\n4. Tap a donation to see details\n5. Request pickup or message the donor\n6. Arrange a pickup time\n\nReminder: Always check food freshness and expiry dates!'
+        },
+        'account': {
+          keywords: ['account', 'password', 'security', 'login'],
+          reply: '🔐 Account & Security:\n\n• Forgot password? Click "Forgot Password?" on login screen\n• Reset your password via email verification\n• Enable 2FA in Settings > Privacy & Security\n• Check active sessions in Account settings\n• Report suspicious activity immediately\n\nYour security is our priority!'
+        },
+        'problem': {
+          keywords: ['problem', 'issue', 'report', 'error', 'bug'],
+          reply: '⚠️ Report a Problem:\n\n1. Go to Settings > Privacy & Security\n2. Tap "Report a Problem"\n3. Choose the issue type\n4. Provide detailed description\n5. Add screenshots if possible\n6. Submit\n\nOur team reviews reports within 24-48 hours. Thanks for helping us improve!'
+        },
+        'rating': {
+          keywords: ['rating', 'review', 'feedback', 'rate'],
+          reply: '⭐ About Ratings & Reviews:\n\n• Leave a 1-5 star rating after each transaction\n• Provide honest feedback about your experience\n• Ratings are anonymous to donors\n• Edit reviews within 30 days of posting\n• Your rating helps build community trust\n\nThanks for your feedback!'
+        },
+        'safety': {
+          keywords: ['safe', 'food safety', 'health', 'expire'],
+          reply: '🥗 Food Safety Tips:\n\n• Only accept food that looks fresh\n• Check expiry dates carefully\n• Avoid food with damage or odors\n• Store food properly after pickup\n• If unsure, ask the donor about storage\n• Never accept perishables that were left out long\n\nEat safe, live healthy!'
+        },
+        'default': {
+          reply: 'Thanks for your question! 😊 I can help with:\n\n• Posting donations\n• Finding food nearby\n• Account & security\n• Reporting problems\n• Ratings & reviews\n• Food safety\n\nTry asking about any of these topics, or type "Help" to see more options!'
+        }
+      };
+
+      function sendMessage(preset = null) {
+        const input = document.getElementById('messageInput');
+        let message = preset || input.value.trim();
+        
+        if (!message) return;
+
+        // Add user message
+        addMessage(message, 'user');
+        input.value = '';
+
+        // Remove quick replies
+        const quickReplies = document.getElementById('quickReplies');
+        if (quickReplies) {
+          quickReplies.style.display = 'none';
+        }
+
+        // Simulate bot typing
+        setTimeout(() => {
+          const response = getBotResponse(message);
+          addMessage(response, 'bot');
+        }, 800);
+      }
+
+      function addMessage(text, sender) {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+
+        if (sender === 'bot') {
+          messageDiv.innerHTML = `
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+              <div class="message-text">${text}</div>
+              <span class="message-time">Just now</span>
+            </div>
+          `;
+        } else {
+          messageDiv.innerHTML = `
+            <div class="message-content">
+              <div class="message-text">${text}</div>
+              <span class="message-time">Just now</span>
+            </div>
+            <div class="message-avatar">👤</div>
+          `;
+        }
+
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function getBotResponse(userMessage) {
+        const lower = userMessage.toLowerCase();
+
+        for (const [key, data] of Object.entries(responses)) {
+          if (key === 'default') continue;
+          if (data.keywords.some(keyword => lower.includes(keyword))) {
+            return data.reply;
+          }
+        }
+
+        return responses.default.reply;
+      }
+
+      // Enter key to send
+      document.getElementById('messageInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      });
+      
+    </script>
+    <script src="pwa.js"></script>
+  </body>
+</html>

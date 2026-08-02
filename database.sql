@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS donations (
     volunteer_id INT,
     donor_rating TINYINT NULL,
     volunteer_rating TINYINT NULL,
+    requested_charge DECIMAL(10,2) NULL DEFAULT NULL,
+    volunteer_charge DECIMAL(10,2) NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -73,3 +75,15 @@ CREATE INDEX idx_donations_user ON donations(user_id);
 CREATE INDEX idx_donations_status ON donations(status);
 CREATE INDEX idx_donations_recipient ON donations(recipient_id);
 CREATE INDEX idx_delivery_otp_donation ON delivery_otp(donation_id);
+
+-- Login History table for activity tracking
+CREATE TABLE IF NOT EXISTS login_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_login_user (user_id),
+    INDEX idx_login_date (created_at)
+);

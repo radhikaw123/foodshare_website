@@ -140,11 +140,12 @@ body {
 /* Stats Section */
 .stats-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
   gap: 16px;
-  margin: 0 0 32px;
-  width: 100%;
+  margin: 0 auto 32px;
+  width: min(100%, 980px);
   padding: 0;
+  justify-content: center;
 }
 
 .stat-card {
@@ -159,6 +160,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  width: 100%;
 }
 
 .stat-card:hover {
@@ -168,9 +170,18 @@ body {
 
 
 
-.stat-icon { font-size: 38px; margin-bottom: 8px; }
-.stat-number { font-size: 34px; }
-.stat-label { font-size: 13px; }
+.stat-icon {
+  font-size: 38px;
+  margin-bottom: 8px;
+}
+
+.stat-number {
+  font-size: 34px;
+}
+
+.stat-label {
+  font-size: 13px;
+}
 
 /* Recent Donations */
 .recent-donations {
@@ -290,7 +301,7 @@ body {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.06);
 }
 
 
@@ -334,16 +345,16 @@ body {
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
 }
 
-.impact-card{
-  display:flex;
-  flex-direction:column;
+.impact-card {
+  display: flex;
+  flex-direction: column;
 }
 
-.impact-text{
-  display:block;
-  margin-top:10px;
-  font-size:14px;
-  color:#ffffff;
+.impact-text {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #ffffff;
 }
 
 .impact-stats {
@@ -396,13 +407,30 @@ body {
 }
 
 @media (max-width: 992px) {
-  .stats-section { gap: 12px; }
-  .stat-card { min-height: 150px; }
+  .stats-section {
+    gap: 12px;
+  }
+
+  .stat-card {
+    min-height: 150px;
+  }
 }
 
 @media (max-width: 768px) {
-  .stats-section { grid-template-columns: 1fr; }
-  .cards-section { grid-template-columns: 1fr; }
-  .impact-stats { grid-template-columns: 1fr; }
-  .donation-item { flex-direction: column; align-items: stretch; }
+  .stats-section {
+    grid-template-columns: 1fr;
+  }
+
+  .cards-section {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .donation-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

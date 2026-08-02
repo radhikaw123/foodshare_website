@@ -297,6 +297,17 @@ body {
   overflow: hidden;
 }
 
+.donation-charge {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c2410c;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 16px;
+}
+
 /* Person Info */
 .donation-persons {
   display: grid;

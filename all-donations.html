@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#10b981">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>All Donations - FoodShare</title>
@@ -67,6 +76,7 @@
       </div>
     </div>
 
+    <script src="donation-utils.js"></script>
     <script>
       let allDonations = [];
       let filteredDonations = [];
@@ -206,6 +216,8 @@
           actionSection = `<span class="accepted-label">Taken</span>`;
         }
 
+        const volunteerChargeHtml = donation.volunteer_charge ? chargeDetailHtml(donation.volunteer_charge, 'Volunteer fee') : '';
+
         return `
           <div class="donation-card">
             <div class="card-image-wrapper">
@@ -230,6 +242,8 @@
               </div>
 
               <p class="description">${donation.description || 'No description provided'}</p>
+              ${formatRequestedCharge(donation.requested_charge) ? `<p class="donation-charge">💰 Donor charge: ${formatRequestedCharge(donation.requested_charge)}</p>` : ''}
+              ${volunteerChargeHtml}
 
               <div class="donation-persons">
                 <div class="donation-person donor">
@@ -257,11 +271,29 @@
       }
 
       function acceptDonation(donationId) {
+          const amount = prompt('Enter the volunteer fee in rupees (0 or higher):');
+          if (amount === null) return;
+          const volunteerCharge = amount.trim();
+          if (volunteerCharge === '') {
+            alert('Please enter a numeric volunteer fee.');
+            return;
+          }
+          if (isNaN(volunteerCharge)) {
+            alert('Please enter a valid numeric amount.');
+            return;
+          }
+          const feeValue = parseFloat(volunteerCharge);
+          if (feeValue < 0) {
+            alert('Volunteer fee cannot be negative.');
+            return;
+          }
           if (!confirm('Do you want to accept this donation?')) return;
+
           fetch(`/api/donations/${donationId}/accept`, {
             method: 'PUT',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ volunteer_charge: feeValue })
           })
           .then(r => r.json())
           .then(result => {
@@ -290,5 +322,6 @@
         document.getElementById('count-completed').textContent = completedCount;
       }
     </script>
+    <script src="pwa.js"></script>
   </body>
 </html>

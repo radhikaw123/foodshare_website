@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#10b981">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Two-Factor Authentication - FoodShare</title>
+    <link rel="stylesheet" href="two-factor-auth.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <a href="settings.html" class="back-btn">←</a>
+        <h1>Two-Factor Auth</h1>
+        <div style="width: 40px;"></div>
+      </header>
+
+      <!-- Already enabled view -->
+      <div id="enabled-view" class="twofa-card" style="display: none;">
+        <div class="status-badge enabled">
+          <span class="status-icon">✓</span>
+          <span>2FA is enabled</span>
+        </div>
+        <h2>Your account is protected</h2>
+        <p class="card-description">
+          Two-factor authentication is active. You'll need a code from your authenticator app each time you sign in.
+        </p>
+        <div class="disable-section">
+          <h3>Disable Two-Factor Authentication</h3>
+          <p>Enter a code from your authenticator app to turn off 2FA.</p>
+          <div class="code-input-group">
+            <input type="text" id="disable-code" maxlength="6" inputmode="numeric" placeholder="000000" autocomplete="one-time-code" />
+          </div>
+          <p id="disable-error" class="error-msg" style="display: none;"></p>
+          <button type="button" id="disable-btn" class="btn btn-danger">Disable 2FA</button>
+        </div>
+      </div>
+
+      <!-- Setup wizard -->
+      <div id="setup-wizard">
+        <div class="step-indicator">
+          <div class="step active" data-step="1">
+            <span class="step-num">1</span>
+            <span class="step-label">Intro</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" data-step="2">
+            <span class="step-num">2</span>
+            <span class="step-label">Scan QR</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" data-step="3">
+            <span class="step-num">3</span>
+            <span class="step-label">Verify</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" data-step="4">
+            <span class="step-num">4</span>
+            <span class="step-label">Done</span>
+          </div>
+        </div>
+
+        <!-- Step 1: Introduction -->
+        <div class="twofa-card step-panel active" id="step-1">
+          <div class="card-icon">🔐</div>
+          <h2>Secure Your Account</h2>
+          <p class="card-description">
+            Two-factor authentication adds an extra layer of security. After entering your password, you'll need a 6-digit code from an authenticator app.
+          </p>
+          <ul class="feature-list">
+            <li>
+              <span class="feature-icon">📱</span>
+              <div>
+                <strong>Authenticator App</strong>
+                <p>Use Google Authenticator, Authy, or similar apps</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-icon">🛡️</span>
+              <div>
+                <strong>Extra Protection</strong>
+                <p>Even if someone knows your password, they can't access your account</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-icon">⚡</span>
+              <div>
+                <strong>Quick Setup</strong>
+                <p>Takes less than 2 minutes to configure</p>
+              </div>
+            </li>
+          </ul>
+          <button type="button" id="start-setup-btn" class="btn btn-primary">Get Started</button>
+        </div>
+
+        <!-- Step 2: Scan QR Code -->
+        <div class="twofa-card step-panel" id="step-2">
+          <h2>Scan QR Code</h2>
+          <p class="card-description">
+            Open your authenticator app and scan the QR code below, or enter the secret key manually.
+          </p>
+          <div id="qr-loading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Generating QR code...</p>
+          </div>
+          <div id="qr-content" style="display: none;">
+            <div class="qr-wrapper">
+              <img id="qr-image" src="" alt="QR code for authenticator app" />
+            </div>
+            <div class="secret-key-box">
+              <label>Manual entry key</label>
+              <div class="secret-key-row">
+                <code id="secret-key"></code>
+                <button type="button" id="copy-secret-btn" class="btn-copy" title="Copy key">Copy</button>
+              </div>
+            </div>
+          </div>
+          <p id="setup-error" class="error-msg" style="display: none;"></p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary" data-go-step="1">Back</button>
+            <button type="button" class="btn btn-primary" data-go-step="3" id="continue-to-verify">Continue</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Verify Code -->
+        <div class="twofa-card step-panel" id="step-3">
+          <h2>Verify Setup</h2>
+          <p class="card-description">
+            Enter the 6-digit code shown in your authenticator app to confirm everything is working.
+          </p>
+          <div class="code-input-group">
+            <input type="text" id="verify-code" maxlength="6" inputmode="numeric" placeholder="000000" autocomplete="one-time-code" />
+          </div>
+          <p id="verify-error" class="error-msg" style="display: none;"></p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary" data-go-step="2">Back</button>
+            <button type="button" id="verify-btn" class="btn btn-primary">Verify & Enable</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Success -->
+        <div class="twofa-card step-panel" id="step-4">
+          <div class="success-icon">✓</div>
+          <h2>You're All Set!</h2>
+          <p class="card-description">
+            Two-factor authentication is now enabled on your account. You'll be asked for a verification code the next time you sign in.
+          </p>
+          <a href="settings.html" class="btn btn-primary">Back to Settings</a>
+        </div>
+      </div>
+    </div>
+
+    <script src="check-auth.js"></script>
+    <script src="two-factor-auth.js"></script>
+    <script src="pwa.js"></script>
+  </body>
+</html>
