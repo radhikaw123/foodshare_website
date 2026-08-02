@@ -117,7 +117,7 @@ function setSessionCookie(res, token) {
   res.cookie('session_token', token, {
     expires: expires,
     httpOnly: true,
-    secure: false, // Set to true in production if using HTTPS
+    secure: true, // Set to true in production if using HTTPS
     sameSite: 'lax',
     path: '/'
   });
@@ -1100,7 +1100,7 @@ app.post('/api/donations/:id/generate-otp', async (req, res) => {
 
     // TODO: Send OTP via email/SMS (for now, log it)
     await transporter.sendMail({
-      from: '"FoodShare Delivery" <raware371322@kkwagh.edu.in>',
+      from: '"FoodShare Delivery" <${process.env.EMAIL_USER}>',
       to: donationData.receiver_email,
       subject: 'FoodShare Delivery OTP Verification',
       html: `
