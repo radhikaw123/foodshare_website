@@ -123,27 +123,23 @@ app.use(express.static('.')); // Serve static files
 function generateSessionToken() {
   return crypto.randomBytes(32).toString('hex');
 }
+
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: Number(process.env.EMAIL_PORT || 465),
-  secure: process.env.EMAIL_SECURE !== 'false',
-  auth: process.env.EMAIL_USER && process.env.EMAIL_PASS ? {
+  service: 'gmail',
+  auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  } : undefined
+  }
 });
 
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-  transporter.verify((error) => {
-    if (error) {
-      console.log('SMTP Error:', error.message || error);
-    } else {
-      console.log('SMTP Ready');
-    }
-  });
-} else {
-  console.log('SMTP not configured. OTP emails will be logged instead of being sent.');
-}
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("SMTP Error:", error);
+  } else {
+    console.log("SMTP Ready");
+  }
+});
+
 // Helper function to set session cookie
 function setSessionCookie(res, token) {
   const expires = new Date();
@@ -1133,11 +1129,16 @@ app.post('/api/donations/:id/generate-otp', async (req, res) => {
     );
 
     let emailSent = false;
+    const validToEmail = donationData.receiver_email && /^([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/.test(donationData.receiver_email);
 
-    if (donationData.receiver_email && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    if (!validToEmail) {
+      console.log(`Receiver email is invalid for donation ${donationId}:`, donationData.receiver_email);
+    }
+
+    if (validToEmail && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       try {
         await transporter.sendMail({
-          from: process.env.EMAIL_FROM || `"FoodShare Delivery" <${process.env.EMAIL_USER}>`,
+          from: process.env.EMAIL_FROM,
           to: donationData.receiver_email,
           subject: 'FoodShare Delivery OTP Verification',
           html: `
@@ -1153,13 +1154,12 @@ app.post('/api/donations/:id/generate-otp', async (req, res) => {
       } catch (mailError) {
         console.error('OTP email sending failed:', mailError.message || mailError);
       }
-    } else if (donationData.receiver_email) {
-      console.log(`OTP email not configured. OTP for donation ${donationId}: ${otp}`);
+    } else if (validToEmail) {
+      console.log(`OTP email not sent (Gmail configuration missing). OTP for donation ${donationId}: ${otp}`);
     } else {
-      console.log(`No receiver email found for donation ${donationId}. OTP was generated but not emailed.`);
+      console.log(`No valid receiver email for donation ${donationId}. OTP was generated but not emailed.`);
     }
 
-    // respond success to caller
     res.json({
       success: true,
       message: emailSent ? 'OTP generated and sent to receiver' : 'OTP generated and stored for delivery verification',
