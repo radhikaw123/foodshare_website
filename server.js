@@ -1,5 +1,8 @@
 require('dotenv').config();
-const nodemailer = require('nodemailer');
+const Brevo = require('@getbrevo/brevo');
+
+const brevoClient = new Brevo.BrevoClient({ apiKey: process.env.BREVO_API_KEY });
+const emailApi = brevoClient.transactionalEmails;
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -124,28 +127,9 @@ function generateSessionToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
-  },
-  family: 4
-});
 
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("SMTP Error:", error);
-  } else {
-    console.log("SMTP Ready");
-  }
-});
+
+
 
 // Helper function to set session cookie
 function setSessionCookie(res, token) {
@@ -1142,24 +1126,54 @@ app.post('/api/donations/:id/generate-otp', async (req, res) => {
       console.log(`Receiver email is invalid for donation ${donationId}:`, donationData.receiver_email);
     }
 
-    if (validToEmail && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    if (validToEmail && process.env.BREVO_API_KEY) {
       try {
-        await transporter.sendMail({
-          from: process.env.EMAIL_FROM,
-          to: donationData.receiver_email,
-          subject: 'FoodShare Delivery OTP Verification',
-          html: `
-            <h2>FoodShare Delivery Verification</h2>
-            <p>Hello ${donationData.receiver_name || 'there'},</p>
-            <p>Your OTP for delivery confirmation is:</p>
-            <h1 style="letter-spacing:3px;">${otp}</h1>
-            <p>This OTP will expire in 10 minutes.</p>
-            <p>Please share this code with the volunteer after receiving the food.</p>
-          `
+        await emailApi.sendTransacEmail({
+
+          sender: {
+            name: process.env.EMAIL_FROM_NAME,
+            email: process.env.EMAIL_FROM
+          },
+
+          to: [
+            {
+              email: donationData.receiver_email,
+              name: donationData.receiver_name || "User"
+            }
+          ],
+
+          subject: "FoodShare Delivery OTP Verification",
+
+          htmlContent: `
+        <h2>FoodShare Delivery Verification</h2>
+
+        <p>Hello ${donationData.receiver_name || "there"},</p>
+
+        <p>Your OTP for delivery confirmation is:</p>
+
+        <h1 style="font-size:36px;letter-spacing:6px;color:#28a745;">
+            ${otp}
+        </h1>
+
+        <p>This OTP is valid for <b>10 minutes</b>.</p>
+
+        <p>Please provide this OTP to the volunteer after receiving your food.</p>
+
+        <br>
+
+        <p>Regards,</p>
+
+        <b>FoodShare Team</b>
+    `
+
         });
+        console.log("OTP Email sent successfully using Brevo.");
         emailSent = true;
       } catch (mailError) {
-        console.error('OTP email sending failed:', mailError.message || mailError);
+        console.error("========== BREVO ERROR ==========");
+        console.error(mailError);
+        console.error(mailError.response?.body);
+        console.error("===============================");
       }
     } else if (validToEmail) {
       console.log(`OTP email not sent (Gmail configuration missing). OTP for donation ${donationId}: ${otp}`);
