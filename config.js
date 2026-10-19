@@ -3,22 +3,21 @@ const DB_CONFIG = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
-  database: process.env.DB_NAME || 'foodshare_db',
+  database: process.env.DB_NAME || 'defaultdb',
   port: Number(process.env.DB_PORT || 3306),
 
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 
-  // Verify the database server's TLS certificate
-  ssl: process.env.DB_SSL_CA
-    ? {
-        ca: process.env.DB_SSL_CA,
-        rejectUnauthorized: true
-      }
-    : {
-        rejectUnauthorized: true
-      }
+  ssl: {
+    ca: process.env.DB_SSL_CA,
+    rejectUnauthorized: true
+  }
 };
+
+if (!DB_CONFIG.ssl.ca) {
+  throw new Error('DB_SSL_CA is missing. Configure the Aiven CA certificate in the deployment environment.');
+}
 
 module.exports = { DB_CONFIG };
