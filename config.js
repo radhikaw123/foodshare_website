@@ -11,9 +11,9 @@ const DB_CONFIG = {
   queueLimit: 0,
 
   ssl: {
-    ca: process.env.DB_SSL_CA,
-    rejectUnauthorized: true
-  }
+  ca: process.env.DB_SSL_CA?.replace(/\\n/g, '\n'),
+  rejectUnauthorized: true
+}
 };
 
 if (!DB_CONFIG.ssl.ca) {
